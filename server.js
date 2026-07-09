@@ -1,6 +1,6 @@
 const express = require('express');
 const session = require('express-session');
-const bcrypt = require('bcrypt');
+const crypto = require('node:crypto');
 const Database = require('better-sqlite3');
 const path = require('node:path');
 const fs = require('node:fs');
@@ -81,6 +81,20 @@ function getUserById(id) {
   return db.prepare('SELECT * FROM users WHERE id = ?').get(id);
 }
 
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.pbkdf2Sync(password, salt, 310000, 32, 'sha256').toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password, stored) {
+  if (!stored || typeof stored !== 'string') return false;
+  const [salt, hash] = stored.split(':');
+  if (!salt || !hash) return false;
+  const derived = crypto.pbkdf2Sync(password, salt, 310000, 32, 'sha256').toString('hex');
+  return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(derived, 'hex'));
+}
+
 app.get('/api/health', (req, res) => {
   res.json({ ok: true });
 });
@@ -92,7 +106,7 @@ app.post('/api/auth/signup', async (req, res) => {
       return res.status(400).json({ error: 'Username, email, and password are required' });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = hashPassword(password);
     const info = db.prepare('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)').run(username, email, passwordHash);
 
     req.session.userId = info.lastInsertRowid;
@@ -113,7 +127,7 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const valid = await bcrypt.compare(password, user.password_hash);
+    const valid = verifyPassword(password, user.password_hash);
     if (!valid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
