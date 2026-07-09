@@ -121,7 +121,12 @@
           data.groups.forEach((group) => {
             const item = document.createElement('div');
             item.className = 'item';
-            item.innerHTML = `<strong>${group.name}</strong><br />Code: ${group.code}<br /><span class="muted">Members: ${group.member_count}</span>`;
+            item.innerHTML = `
+              <strong>${group.name}</strong><br />
+              Code: ${group.code}<br />
+              <span class="muted">Members: ${group.member_count}</span><br />
+              <a href="/groups/${group.id}/play" style="display:inline-block;margin-top:8px;color:#f59e0b;">Open game</a>
+            `;
             groupsList.appendChild(item);
           });
         } catch (error) {

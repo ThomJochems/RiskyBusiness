@@ -176,6 +176,39 @@ app.get('/api/groups/:id', requireAuth, (req, res) => {
   res.json({ group: { id: group.id, name: group.name, code: group.code, members, state: state ? JSON.parse(state.payload) : {} } });
 });
 
+app.get('/api/groups/:id/game', requireAuth, (req, res) => {
+  const group = db.prepare('SELECT * FROM groups WHERE id = ?').get(req.params.id);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+
+  const isMember = db.prepare('SELECT 1 FROM group_members WHERE group_id = ? AND user_id = ?').get(group.id, req.session.userId);
+  if (!isMember) return res.status(403).json({ error: 'Not a member of this group' });
+
+  const state = db.prepare('SELECT payload FROM game_state WHERE group_id = ?').get(group.id);
+  res.json({ game: state ? JSON.parse(state.payload) : { troops: {}, tiebreakers: {}, lastUpdated: {}, selectedPlayer: null, kissLog: [] } });
+});
+
+app.post('/api/groups/:id/game', requireAuth, (req, res) => {
+  const group = db.prepare('SELECT * FROM groups WHERE id = ?').get(req.params.id);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+
+  const isMember = db.prepare('SELECT 1 FROM group_members WHERE group_id = ? AND user_id = ?').get(group.id, req.session.userId);
+  if (!isMember) return res.status(403).json({ error: 'Not a member of this group' });
+
+  const payload = JSON.stringify(req.body || {});
+  db.prepare('INSERT INTO game_state (group_id, payload) VALUES (?, ?) ON CONFLICT(group_id) DO UPDATE SET payload = excluded.payload, updated_at = CURRENT_TIMESTAMP').run(group.id, payload);
+  res.json({ ok: true });
+});
+
+app.get('/groups/:id/play', requireAuth, (req, res) => {
+  const group = db.prepare('SELECT * FROM groups WHERE id = ?').get(req.params.id);
+  if (!group) return res.status(404).send('Group not found');
+
+  const isMember = db.prepare('SELECT 1 FROM group_members WHERE group_id = ? AND user_id = ?').get(group.id, req.session.userId);
+  if (!isMember) return res.status(403).send('Not a member of this group');
+
+  res.sendFile(path.join(__dirname, 'Risky_business-Thoms-Laptop.html'));
+});
+
 app.get('/api/groups', requireAuth, (req, res) => {
   const groups = db.prepare(`
     SELECT g.id, g.name, g.code, g.owner_id, COUNT(gm.id) AS member_count
@@ -192,7 +225,14 @@ app.get('*', (req, res) => {
 });
 
 if (require.main === module) {
-  app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+  const server = app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+  server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error(`Port ${PORT} is already in use. Close the existing server or restart with PORT=3001.`);
+      process.exit(1);
+    }
+    throw error;
+  });
 }
 
 module.exports = { app, db };

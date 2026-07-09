@@ -4,7 +4,7 @@
   "description": "A multi-user online version of Risky Business with accounts, groups, and shared gameplay.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "start.cmd",
     "test": "node --test"
   },
   "dependencies": {

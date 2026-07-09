@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Risky Business | Play</title>
+    <style>
+      body { margin: 0; font-family: Arial, sans-serif; background: #020617; color: #f8fafc; }
+      .shell { display: grid; grid-template-columns: 320px 1fr; min-height: 100vh; }
+      .sidebar { background: #111827; padding: 20px; border-right: 1px solid #334155; }
+      .main { padding: 20px; }
+      .card { background: #111827; border: 1px solid #334155; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+      button { padding: 10px 12px; border-radius: 8px; border: 1px solid #f59e0b; background: #f59e0b; color: #111827; cursor: pointer; }
+      .player { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #334155; }
+      .map { height: 70vh; border-radius: 16px; background: linear-gradient(135deg,#0f766e,#0f172a); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; border: 1px solid #334155; }
+      .muted { color: #94a3b8; }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="card">
+          <h2>Game Lobby</h2>
+          <p id="group-name" class="muted">Loading…</p>
+          <p id="group-code" class="muted">Invite code: …</p>
+        </div>
+        <div class="card">
+          <h3>Players</h3>
+          <div id="players"></div>
+        </div>
+        <div class="card">
+          <a href="/" style="color:#f59e0b;">Back to dashboard</a>
+        </div>
+      </aside>
+      <main class="main">
+        <div class="card">
+          <h1>RISKY BUSINESS</h1>
+          <p class="muted">This is the shared gameplay view for your group. You can now enter the game room and interact with the map.</p>
+        </div>
+        <div class="map">
+          <div style="text-align:center;">
+            <div style="font-size:2rem;font-weight:700;">World Map</div>
+            <div class="muted" style="margin-top:8px;">The full map and turn-based gameplay will be connected here next.</div>
+            <button id="play-btn" style="margin-top:16px;">Start game</button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      const groupId = window.location.pathname.split('/')[2];
+      const groupNameEl = document.getElementById('group-name');
+      const groupCodeEl = document.getElementById('group-code');
+      const playersEl = document.getElementById('players');
+      const playBtn = document.getElementById('play-btn');
+
+      async function loadGroup() {
+        const response = await fetch(`/api/groups/${groupId}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Unable to load group');
+        groupNameEl.textContent = data.group.name;
+        groupCodeEl.textContent = `Invite code: ${data.group.code}`;
+        playersEl.innerHTML = '';
+        data.group.members.forEach((member) => {
+          const row = document.createElement('div');
+          row.className = 'player';
+          row.innerHTML = `<span>${member.username}</span><span class="muted">${member.role}</span>`;
+          playersEl.appendChild(row);
+        });
+      }
+
+      playBtn.addEventListener('click', () => {
+        alert('Game started for this group. The shared map experience is now available from this room.');
+      });
+
+      loadGroup().catch((error) => {
+        console.error(error);
+        groupNameEl.textContent = 'Unable to load group';
+      });
+    </script>
+  </body>
+</html>

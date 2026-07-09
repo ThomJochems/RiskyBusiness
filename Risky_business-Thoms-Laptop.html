@@ -876,14 +876,17 @@
 
 <script>
 // ---- PLAYERS ----
-const PLAYERS = [
-  { id: 1, name: 'Thom',    color: '#9b5de5' },
-  { id: 2, name: 'Thijmen', color: '#e63946' },
-  { id: 3, name: 'Thijs',   color: '#457b9d' },
-  { id: 4, name: 'Aidan',   color: '#2a9d8f' },
-  { id: 5, name: 'Jorik',   color: '#e9c46a' },
-  { id: 6, name: 'Chris',   color: '#f4732a' },
-];
+let PLAYERS = [];
+const PLAYER_COLORS = ['#9b5de5', '#e63946', '#457b9d', '#2a9d8f', '#e9c46a', '#f4732a', '#38bdf8', '#fb923c'];
+
+function buildPlayer(member, index) {
+  return {
+    id: member.id,
+    name: member.username || member.name || `Player ${index + 1}`,
+    color: PLAYER_COLORS[index % PLAYER_COLORS.length],
+    role: member.role
+  };
+}
 
 const COUNTRY_NAMES = {
   4:"Afghanistan",8:"Albania",10:"Antarctica",12:"Algeria",16:"American Samoa",20:"Andorra",24:"Angola",28:"Antigua and Barbuda",32:"Argentina",36:"Australia",40:"Austria",44:"Bahamas",48:"Bahrain",50:"Bangladesh",52:"Barbados",56:"Belgium",60:"Bermuda",64:"Bhutan",68:"Bolivia",70:"Bosnia and Herzegovina",72:"Botswana",74:"Bouvet Island",76:"Brazil",84:"Belize",86:"Taiwan",90:"Solomon Islands",92:"British Virgin Islands",96:"Brunei",100:"Bulgaria",104:"Myanmar",108:"Burundi",112:"Belarus",116:"Cambodia",120:"Cameroon",124:"Canada",132:"Cape Verde",136:"Cayman Islands",140:"Central African Republic",144:"Sri Lanka",148:"Chad",152:"Chile",156:"China",158:"Taiwan",162:"Christmas Island",166:"Comoros",170:"Colombia",174:"Comoros",175:"Mauritius",178:"Mauritius",180:"Democratic Republic of the Congo",184:"Cook Islands",188:"Costa Rica",191:"Croatia",192:"Cuba",196:"Cyprus",203:"Czech Republic",204:"Benin",208:"Denmark",212:"Dominica",214:"Dominican Republic",218:"Ecuador",222:"El Salvador",226:"Equatorial Guinea",231:"Ethiopia",232:"Eritrea",238:"Falkland Islands",239:"South Georgia and South Sandwich Islands",242:"Fiji",246:"Finland",248:"French Guiana",250:"France",254:"French Guiana",258:"French Polynesia",260:"French Guiana",262:"Reunion",266:"Mozambique",268:"Mauritius",270:"Mauritius",275:"Palestine",276:"Germany",288:"Ghana",292:"Gibraltar",296:"Kiribati",300:"Greece",304:"Greenland",308:"Grenada",312:"Guadeloupe",316:"Guam",320:"Guatemala",324:"Guinea",328:"Guyana",332:"Haiti",334:"Heard Island and McDonald Islands",340:"Honduras",344:"Hong Kong",348:"Hungary",352:"Iceland",356:"India",360:"Indonesia",364:"Iran",368:"Iraq",372:"Ireland",376:"Israel",380:"Italy",383:"Kosovo",384:"Côte d'Ivoire",388:"Jamaica",392:"Japan",396:"Japan",398:"Kazakhstan",400:"Jordan",404:"Kenya",408:"North Korea",410:"South Korea",414:"Kuwait",417:"Kyrgyzstan",418:"Laos",422:"Lebanon",426:"Lesotho",428:"Latvia",430:"Liberia",434:"Libya",438:"Liechtenstein",440:"Lithuania",442:"Luxembourg",446:"Macao",450:"Madagascar",454:"Malawi",458:"Malaysia",462:"Maldives",466:"Mali",470:"Malta",474:"Martinique",478:"Mauritania",480:"Mauritius",484:"Mexico",492:"Monaco",496:"Mongolia",498:"Moldova",499:"Montenegro",500:"Montserrat",504:"Morocco",508:"Mozambique",512:"Oman",516:"Namibia",520:"Nauru",524:"Nepal",528:"Netherlands",531:"Curaçao",533:"Aruba",534:"Sint Maarten",535:"Caribbean Netherlands",540:"New Caledonia",548:"Vanuatu",554:"New Zealand",558:"Nicaragua",562:"Niger",566:"Nigeria",570:"Niue",574:"Norfolk Island",578:"Norway",580:"Northern Mariana Islands",581:"United States Minor Outlying Islands",583:"Federated States of Micronesia",584:"Marshall Islands",585:"Palau",586:"Pakistan",591:"Panama",598:"Papua New Guinea",600:"Paraguay",604:"Peru",608:"Philippines",612:"Pitcairn Islands",616:"Poland",620:"Portugal",624:"Guinea-Bissau",626:"Timor-Leste",630:"Puerto Rico",634:"Qatar",638:"Reunion",642:"Romania",643:"Russia",646:"Rwanda",652:"Saint Barthélemy",654:"Saint Helena, Ascension and Tristan da Cunha",659:"Saint Kitts and Nevis",660:"Anguilla",662:"Saint Lucia",666:"Saint Pierre and Miquelon",670:"Saint Vincent and the Grenadines",674:"San Marino",678:"São Tomé and Príncipe",682:"Saudi Arabia",686:"Senegal",688:"Serbia",690:"Seychelles",694:"Sierra Leone",702:"Malta",703:"Slovakia",704:"Vietnam",705:"Slovenia",706:"Somalia",710:"South Africa",716:"Zimbabwe",724:"Spain",728:"South Sudan",729:"Sudan",732:"Western Sahara",740:"Suriname",744:"Svalbard and Jan Mayen",748:"Eswatini",752:"Sweden",756:"Switzerland",760:"Syria",762:"Tajikistan",764:"Thailand",768:"Togo",772:"Tokelau",776:"Tonga",780:"Trinidad and Tobago",784:"United Arab Emirates",788:"Tunisia",792:"Turkey",795:"Turkmenistan",796:"Turks and Caicos Islands",798:"Tuvalu",800:"Uganda",804:"Ukraine",807:"North Macedonia",818:"Egypt",826:"United Kingdom",831:"Guernsey",832:"Jersey",833:"Isle of Man",834:"Tanzania",840:"United States",850:"United States Virgin Islands",854:"Burkina Faso",858:"Uruguay",860:"Uzbekistan",862:"Venezuela",876:"Wallis and Futuna",882:"Samoa",886:"Taiwan",887:"Yemen",894:"Zambia",
@@ -927,63 +930,64 @@ function getContinentController(continentName) {
 }
 
 // ---- STATE ----
-let selectedPlayer = PLAYERS[0].id;
+let selectedPlayer = null;
 let selectedCountry = null;
 let troops = {}; // { countryId: { playerId: count } }
 let tiebreakers = {}; // { countryId: { playerId: true/false } }
 let lastUpdated = {}; // { countryId: { playerId: timestamp } }
 let selectedEl = null;
-
-// ---- STORAGE ----
-const STORAGE_KEY = 'risky-business-v1';
-const JSONBIN_ID = '69c013cbc3097a1dd54b9dcf';
-const JSONBIN_KEY = '$2a$10$TjKftwh/7DpLfmx2r2ccj.okpkVZTpdNqZh7WycR9dB6ssH1nQF9K';
+const GROUP_ID = Number(window.location.pathname.split('/')[2]) || null;
 
 async function saveData() {
+  if (!GROUP_ID) return;
   const data = { troops, tiebreakers, lastUpdated, selectedPlayer, kissLog };
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
   try {
     flashStatus('Saving…', false);
-    await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
+    await fetch(`/api/groups/${GROUP_ID}/game`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
     flashStatus('Saved ✓', true);
-  } catch(e) { flashStatus('Local only', false); }
+  } catch (e) {
+    flashStatus('Save failed', false);
+  }
+}
+
+async function loadGroupMembers() {
+  if (!GROUP_ID) return;
+  try {
+    const response = await fetch(`/api/groups/${GROUP_ID}`);
+    const data = await response.json();
+    if (!response.ok) return;
+    PLAYERS = (data.group?.members || []).map(buildPlayer);
+    if (!selectedPlayer || !PLAYERS.some(p => p.id === selectedPlayer)) {
+      selectedPlayer = PLAYERS[0]?.id || null;
+    }
+  } catch (e) {
+    PLAYERS = [];
+  }
 }
 
 async function loadSaved() {
+  if (!GROUP_ID) return;
+  await loadGroupMembers();
   try {
-    const resp = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, {
-      headers: { 'X-Master-Key': JSONBIN_KEY }
-    });
-    const json = await resp.json();
-    const d = json.record || json;
-    if (d && d.troops) {
-      troops = d.troops || {};
-      tiebreakers = d.tiebreakers || {};
-      lastUpdated = d.lastUpdated || {};
-      selectedPlayer = d.selectedPlayer || PLAYERS[0].id;
-      kissLog = d.kissLog || [];
-      flashStatus('Synced ✓', true);
+    const response = await fetch(`/api/groups/${GROUP_ID}/game`);
+    const data = await response.json();
+    if (response.ok && data.game) {
+      troops = data.game.troops || {};
+      tiebreakers = data.game.tiebreakers || {};
+      lastUpdated = data.game.lastUpdated || {};
+      selectedPlayer = data.game.selectedPlayer || PLAYERS[0]?.id || null;
+      kissLog = data.game.kissLog || [];
+      flashStatus('Loaded ✓', true);
       renderAll();
       updateMapColors();
       return;
     }
-  } catch(e) {}
-  // Fallback to localStorage
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const d = JSON.parse(raw);
-    if (d.troops) troops = d.troops;
-    if (d.tiebreakers) tiebreakers = d.tiebreakers;
-    if (d.lastUpdated) lastUpdated = d.lastUpdated;
-    if (d.selectedPlayer) selectedPlayer = d.selectedPlayer;
-    if (d.kissLog) kissLog = d.kissLog || [];
-    flashStatus('Loaded ✓', true);
-  } catch(e) {}
+  } catch (e) {}
+  flashStatus('No saved game yet', false);
 }
 
 function resetData() {
@@ -1009,7 +1013,9 @@ function flashStatus(msg, ok) {
   statusTimer = setTimeout(() => { el.textContent = ''; el.className = 'save-status'; }, 2800);
 }
 
-setInterval(saveData, 60000);
+setInterval(() => {
+  if (GROUP_ID) saveData();
+}, 30000);
 
 // ---- ZOOM & PAN ----
 let scale = 1, panX = 0, panY = 0;
@@ -1174,18 +1180,20 @@ function selectCountry(id, name, el) {
 }
 
 function changeTroops(pid, delta) {
-  if (!selectedCountry) return;
+  if (!selectedCountry || !selectedPlayer) return;
   const cid = selectedCountry.id;
   if (!troops[cid]) troops[cid] = {};
   const newVal = Math.max(0, (troops[cid][pid] || 0) + delta);
   troops[cid][pid] = newVal;
   if (!lastUpdated[cid]) lastUpdated[cid] = {};
   lastUpdated[cid][pid] = Date.now();
-  document.getElementById('tc-' + pid).textContent = troops[cid][pid];
+  const el = document.getElementById('tc-' + pid);
+  if (el) el.textContent = troops[cid][pid];
   updateMapColors();
   renderPlayers();
   renderScoreboard();
   renderLegend();
+  saveData();
 }
 
 function changeTiebreaker(pid, delta) {
@@ -1198,6 +1206,7 @@ function changeTiebreaker(pid, delta) {
   renderScoreboard();
   renderLegend();
   renderTerritoryPanel();
+  saveData();
 }
 
 function hexToRgb(hex) {
@@ -1854,59 +1863,6 @@ function renderLeaderboard() {
     </div>
   `).join('');
 }
-
-// ---- PATCH SAVE/LOAD TO INCLUDE kissLog ----
-const _origSave = saveData;
-saveData = async function() {
-  const data = { troops, tiebreakers, lastUpdated, selectedPlayer, kissLog };
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
-  try {
-    flashStatus('Saving…', false);
-    if (typeof JSONBIN_ID !== 'undefined' && JSONBIN_ID && !JSONBIN_ID.includes('PASTE')) {
-      await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
-        body: JSON.stringify(data)
-      });
-    }
-    flashStatus('Saved ✓', true);
-  } catch(e) { flashStatus('Local only', false); }
-};
-
-const _origLoad = loadSaved;
-loadSaved = async function() {
-  try {
-    if (typeof JSONBIN_ID !== 'undefined' && JSONBIN_ID && !JSONBIN_ID.includes('PASTE')) {
-      const resp = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, {
-        headers: { 'X-Master-Key': JSONBIN_KEY }
-      });
-      const json = await resp.json();
-      const d = json.record || json;
-      if (d && d.troops) {
-        troops = d.troops || {};
-        tiebreakers = d.tiebreakers || {};
-        lastUpdated = d.lastUpdated || {};
-        selectedPlayer = d.selectedPlayer || PLAYERS[0].id;
-        kissLog = d.kissLog || [];
-        flashStatus('Synced ✓', true);
-        renderAll();
-        updateMapColors();
-        return;
-      }
-    }
-  } catch(e) {}
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const d = JSON.parse(raw);
-    if (d.troops) troops = d.troops;
-    if (d.tiebreakers) tiebreakers = d.tiebreakers;
-    if (d.lastUpdated) lastUpdated = d.lastUpdated;
-    if (d.selectedPlayer) selectedPlayer = d.selectedPlayer;
-    if (d.kissLog) kissLog = d.kissLog;
-    flashStatus('Loaded ✓', true);
-  } catch(e) {}
-};
 
 // ---- BOOT ----
 loadMap().then(() => {

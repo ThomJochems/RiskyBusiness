@@ -42,4 +42,8 @@ test('users can sign up, log in, create a group, and join it', async () => {
   const groupDetails = await user1.get(`/api/groups/${createGroup.body.group.id}`);
   assert.equal(groupDetails.status, 200);
   assert.equal(groupDetails.body.group.members.length, 2);
+
+  const playPage = await user1.get(`/groups/${createGroup.body.group.id}/play`);
+  assert.equal(playPage.status, 200);
+  assert.match(playPage.text, /RISKY BUSINESS/i);
 });
