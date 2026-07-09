@@ -8,10 +8,9 @@
     "test": "node --test"
   },
   "dependencies": {
-    "bcrypt": "^5.1.1",
-    "better-sqlite3": "^11.5.0",
     "express": "^4.21.2",
-    "express-session": "^1.4.0"
+    "express-session": "^1.4.0",
+    "pg": "^8.2.0"
   },
   "devDependencies": {
     "supertest": "^7.1.0"
