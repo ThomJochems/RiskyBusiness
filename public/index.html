@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Risky Business</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 0; background: #0f172a; color: #f8fafc; }
+      .shell { max-width: 1100px; margin: 0 auto; padding: 24px; } 
+      .card { background: #111827; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+      form { display: grid; gap: 10px; } 
+      input, button { padding: 10px; border-radius: 8px; border: 1px solid #475569; font-size: 1rem; } 
+      button { cursor: pointer; background: #f59e0b; color: #111827; font-weight: 600; } 
+      .row { display: flex; gap: 12px; flex-wrap: wrap; } 
+      .muted { color: #94a3b8; } 
+      .hidden { display: none; }
+      .list { display: flex; flex-direction: column; gap: 8px; }
+      .item { background: #1f2937; padding: 12px; border-radius: 8px; }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="card">
+        <h1>Risky Business</h1>
+        <p class="muted">A shared world-domination game for groups, now upgraded to support accounts and online play.</p>
+      </div>
+
+      <div id="auth-view" class="card">
+        <h2>Account access</h2>
+        <form id="signup-form">
+          <input name="username" placeholder="Username" required />
+          <input name="email" placeholder="Email" type="email" required />
+          <input name="password" placeholder="Password" type="password" required />
+          <button type="submit">Create account</button>
+        </form>
+        <hr style="margin: 16px 0;" />
+        <form id="login-form">
+          <input name="email" placeholder="Email" type="email" required />
+          <input name="password" placeholder="Password" type="password" required />
+          <button type="submit">Log in</button>
+        </form>
+      </div>
+
+      <div id="app-view" class="hidden">
+        <div class="card">
+          <div class="row" style="justify-content: space-between; align-items: center;">
+            <div>
+              <h2 id="welcome-title">Welcome</h2>
+              <p id="user-email" class="muted"></p>
+            </div>
+            <button id="logout-btn">Log out</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Create or join a group</h3>
+          <form id="group-create-form">
+            <input name="name" placeholder="Group name" required />
+            <button type="submit">Create group</button>
+          </form>
+          <form id="group-join-form" style="margin-top: 12px;">
+            <input name="code" placeholder="Group code" required />
+            <button type="submit">Join group</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3>Your groups</h3>
+          <div id="groups-list" class="list"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const authView = document.getElementById('auth-view');
+      const appView = document.getElementById('app-view');
+      const welcomeTitle = document.getElementById('welcome-title');
+      const userEmailEl = document.getElementById('user-email');
+      const groupsList = document.getElementById('groups-list');
+
+      async function api(path, options = {}) {
+        const response = await fetch(path, {
+          headers: { 'Content-Type': 'application/json' },
+          ...options
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || 'Request failed');
+        return data;
+      }
+
+      async function loadSession() {
+        try {
+          const data = await api('/api/auth/me');
+          showApp(data.user);
+        } catch (error) {
+          showAuth();
+        }
+      }
+
+      function showAuth() {
+        authView.classList.remove('hidden');
+        appView.classList.add('hidden');
+      }
+
+      function showApp(user) {
+        authView.classList.add('hidden');
+        appView.classList.remove('hidden');
+        welcomeTitle.textContent = `Welcome, ${user.username}`;
+        userEmailEl.textContent = user.email;
+        loadGroups();
+      }
+
+      async function loadGroups() {
+        try {
+          const data = await api('/api/groups');
+          groupsList.innerHTML = '';
+          if (!data.groups || data.groups.length === 0) {
+            groupsList.innerHTML = '<div class="item">No groups yet. Create one or join an invite code.</div>';
+            return;
+          }
+          data.groups.forEach((group) => {
+            const item = document.createElement('div');
+            item.className = 'item';
+            item.innerHTML = `<strong>${group.name}</strong><br />Code: ${group.code}<br /><span class="muted">Members: ${group.member_count}</span>`;
+            groupsList.appendChild(item);
+          });
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      document.getElementById('signup-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.target;
+        const payload = Object.fromEntries(new FormData(form).entries());
+        try {
+          await api('/api/auth/signup', { method: 'POST', body: JSON.stringify(payload) });
+          form.reset();
+          await loadSession();
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+
+      document.getElementById('login-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.target;
+        const payload = Object.fromEntries(new FormData(form).entries());
+        try {
+          await api('/api/auth/login', { method: 'POST', body: JSON.stringify(payload) });
+          form.reset();
+          await loadSession();
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+
+      document.getElementById('group-create-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.target;
+        const payload = Object.fromEntries(new FormData(form).entries());
+        try {
+          const data = await api('/api/groups', { method: 'POST', body: JSON.stringify(payload) });
+          alert(`Group created. Share code ${data.group.code}`);
+          form.reset();
+          await loadGroups();
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+
+      document.getElementById('group-join-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.target;
+        const payload = Object.fromEntries(new FormData(form).entries());
+        try {
+          await api('/api/groups/join', { method: 'POST', body: JSON.stringify(payload) });
+          alert('Joined group');
+          form.reset();
+          await loadGroups();
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+
+      document.getElementById('logout-btn').addEventListener('click', async () => {
+        try {
+          await api('/api/auth/logout', { method: 'POST' });
+          showAuth();
+        } catch (error) {
+          console.error(error);
+        }
+      });
+
+      loadSession();
+    </script>
+  </body>
+</html>

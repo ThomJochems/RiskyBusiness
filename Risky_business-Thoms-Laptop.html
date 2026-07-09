@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Risky Business</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+
+  :root {
+    --bg: #0a0c0f;
+    --parchment-dark: #8b6914;
+    --panel: #111418;
+    --panel2: #181c22;
+    --border: #2a3040;
+    --text: #e8dcc8;
+    --text-dim: #7a8090;
+    --accent: #d4a843;
+    --ocean: #0d1f2d;
+    --glow: rgba(212,168,67,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Text', serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  header {
+    text-align: center;
+    padding: 8px 0 4px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #0e1218 0%, var(--panel) 100%);
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  header h1 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.5rem;
+    color: var(--accent);
+    letter-spacing: 0.3em;
+    text-shadow: 0 0 30px rgba(212,168,67,0.4);
+  }
+
+  header p { font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.15em; margin-top: 1px; }
+
+  .header-actions {
+    position: absolute;
+    right: 12px; top: 50%;
+    transform: translateY(-50%);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .save-status { font-size: 0.65rem; color: var(--text-dim); font-style: italic; min-width: 70px; text-align: right; }
+  .save-status.ok { color: #2a9d8f; }
+
+  .hbtn {
+    border-radius: 3px;
+    border: 1px solid var(--accent);
+    background: none;
+    color: var(--accent);
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .hbtn:hover { background: var(--accent); color: #0a0c0f; }
+  .hbtn.danger { border-color: #c1121f; color: #c1121f; }
+  .hbtn.danger:hover { background: #c1121f; color: #fff; }
+
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 350px; min-width: 350px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+    padding: 12px; gap: 12px;
+  }
+
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem; letter-spacing: 0.25em;
+    color: var(--parchment-dark);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 4px; margin-bottom: 6px;
+  }
+
+  .players-list { display: flex; flex-direction: column; gap: 5px; }
+
+  .player-card {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 7px 10px;
+    background: var(--panel2);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .player-card.active {
+    border-color: var(--pc);
+    box-shadow: 0 0 10px var(--pg);
+  }
+
+  .player-card-header { display: flex; align-items: center; gap: 8px; }
+
+  .player-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  .player-name { font-family: 'Cinzel', serif; font-size: 0.78rem; font-weight: 700; flex: 1; }
+
+  .player-territories { font-size: 0.67rem; color: var(--text-dim); margin-top: 2px; padding-left: 18px; }
+
+  /* TERRITORY PANEL */
+  .territory-panel {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px;
+  }
+
+  .territory-name {
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem; font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .troop-entry {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .troop-entry:last-child { border-bottom: none; }
+
+  .troop-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .troop-player { font-size: 0.76rem; flex: 1; }
+  .troop-controls { display: flex; align-items: center; gap: 2px; }
+
+  .troop-btn {
+    height: 20px; min-width: 22px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 0.72rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.14s;
+    font-family: 'Cinzel', serif;
+    padding: 0 3px;
+  }
+  .troop-btn:hover { background: var(--accent); color: #0a0c0f; border-color: var(--accent); }
+
+  .troop-count {
+    font-family: 'Cinzel', serif;
+    font-size: 0.82rem;
+    min-width: 26px; text-align: center;
+  }
+
+  .no-selection {
+    color: var(--text-dim); font-style: italic;
+    font-size: 0.82rem; text-align: center; padding: 6px 0;
+  }
+
+  /* MAP */
+  .map-area {
+    flex: 1;
+    background: var(--ocean);
+    position: relative; overflow: hidden;
+    background-image:
+      radial-gradient(ellipse at 30% 40%, rgba(13,40,70,0.6) 0%, transparent 60%),
+      radial-gradient(ellipse at 70% 60%, rgba(10,30,55,0.4) 0%, transparent 50%);
+  }
+
+  #map-wrapper {
+    width: 100%; height: 100%;
+    overflow: hidden; position: relative;
+    cursor: grab;
+  }
+  #map-wrapper.grabbing { cursor: grabbing; }
+
+  #world-map {
+    width: 100%; height: 100%;
+    transform-origin: 0 0;
+    user-select: none;
+  }
+
+  #world-map path {
+    stroke: #1a3050; stroke-width: 0.4;
+    fill: #2a4060;
+    transition: fill 0.2s, opacity 0.15s;
+    cursor: pointer;
+  }
+  #world-map path:hover { opacity: 0.8; stroke: rgba(212,168,67,0.55); stroke-width: 0.8; }
+  #world-map path.selected { stroke: var(--accent) !important; stroke-width: 1.3 !important; }
+
+  /* ZOOM */
+  .zoom-controls {
+    position: absolute; bottom: 14px; left: 14px;
+    display: flex; flex-direction: column; gap: 4px; z-index: 10;
+  }
+
+  .zbtn {
+    width: 32px; height: 32px;
+    background: rgba(10,12,15,0.88);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 1.15rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.14s;
+    line-height: 1;
+  }
+  .zbtn:hover { background: var(--accent); color: #0a0c0f; border-color: var(--accent); }
+  .zbtn.fit { font-family: 'Cinzel', serif; font-size: 0.55rem; letter-spacing: 0.05em; height: 26px; }
+
+  /* TOOLTIP */
+  .tooltip {
+    position: fixed;
+    background: rgba(10,12,15,0.95);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 5px 10px;
+    pointer-events: none;
+    font-family: 'Cinzel', serif;
+    font-size: 0.68rem; color: var(--accent); letter-spacing: 0.08em;
+    display: none; z-index: 200;
+    white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  }
+
+  /* LEGEND */
+  .legend {
+    position: absolute; bottom: 14px; right: 14px;
+    background: rgba(10,12,15,0.85);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 12px;
+    z-index: 10;
+  }
+
+  .legend-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.57rem; letter-spacing: 0.2em;
+    color: var(--text-dim); margin-bottom: 6px;
+  }
+
+  .legend-row { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .legend-name { font-size: 0.7rem; }
+  .legend-count { font-family: 'Cinzel', serif; font-size: 0.62rem; color: var(--text-dim); margin-left: auto; padding-left: 12px; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--panel); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ---- MOBILE BOTTOM SHEET ---- */
+  #mobile-panel {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    z-index: 300;
+    max-height: 70vh;
+    overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  #mobile-panel.open { transform: translateY(0); }
+
+  .sheet-handle {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 10px auto 6px;
+  }
+
+  .sheet-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    padding: 0 12px;
+    gap: 0;
+  }
+
+  .sheet-tab {
+    flex: 1;
+    padding: 8px 4px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .sheet-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .sheet-content { padding: 12px; }
+
+  .sheet-pane { display: none; }
+  .sheet-pane.active { display: block; }
+
+  /* Mobile territory panel tweaks */
+  #mobile-panel .troop-entry {
+    padding: 7px 0;
+  }
+
+  #mobile-panel .troop-btn {
+    height: 34px;
+    min-width: 34px;
+    font-size: 0.85rem;
+  }
+
+  #mobile-panel .troop-count {
+    font-size: 1rem;
+    min-width: 32px;
+  }
+
+  #mobile-panel .troop-player {
+    font-size: 0.85rem;
+  }
+
+  #mobile-panel .player-card {
+    padding: 10px 12px;
+  }
+
+  #mobile-panel .player-name {
+    font-size: 0.9rem;
+  }
+
+  #mobile-panel .player-territories {
+    font-size: 0.75rem;
+  }
+
+  /* Mobile open button */
+  #mobile-open-btn {
+    display: none;
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    background: var(--panel);
+    border: 1px solid var(--accent);
+    border-radius: 24px;
+    color: var(--accent);
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    padding: 10px 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    white-space: nowrap;
+  }
+
+  /* Country name banner on mobile */
+  #mobile-country-banner {
+    display: none;
+    position: fixed;
+    top: 58px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10,12,15,0.92);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 5px 14px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    z-index: 150;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  /* Backdrop */
+  #sheet-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 299;
+  }
+
+  /* ---- STATS OVERLAY ---- */
+  #stats-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 500;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #stats-overlay.open { display: flex; }
+
+  .stats-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #0e1218 0%, var(--panel) 100%);
+    flex-shrink: 0;
+    gap: 12px;
+  }
+
+  .stats-header h2 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.1rem;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    flex: 1;
+  }
+
+  .stats-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    flex-shrink: 0;
+    overflow-x: auto;
+  }
+
+  .stats-tab {
+    padding: 10px 18px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+  .stats-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .stats-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+  }
+
+  .stats-pane { display: none; }
+  .stats-pane.active { display: block; }
+
+  /* Add entry form */
+  .add-entry-form {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+    margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .add-entry-form .full { grid-column: 1 / -1; }
+
+  .form-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    margin-bottom: 3px;
+    text-transform: uppercase;
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .form-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'Crimson Text', serif;
+    font-size: 0.9rem;
+    padding: 6px 8px;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus { outline: none; border-color: var(--accent); }
+
+  .form-select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: 'Crimson Text', serif;
+    font-size: 0.9rem;
+    padding: 6px 8px;
+    width: 100%;
+    cursor: pointer;
+  }
+  .form-select:focus { outline: none; border-color: var(--accent); }
+
+  .add-entry-btn {
+    grid-column: 1 / -1;
+    background: var(--accent);
+    color: #0a0c0f;
+    border: none;
+    border-radius: 3px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 4px;
+  }
+  .add-entry-btn:hover { background: #e8c060; }
+
+  /* Timeline */
+  .timeline { display: flex; flex-direction: column; gap: 10px; }
+
+  .timeline-entry {
+    display: flex;
+    gap: 12px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    position: relative;
+    transition: border-color 0.15s;
+  }
+  .timeline-entry:hover { border-color: var(--border); }
+
+  .timeline-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 3px;
+    box-shadow: 0 0 8px currentColor;
+  }
+
+  .timeline-body { flex: 1; }
+
+  .timeline-name {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .timeline-meta {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .timeline-meta span { display: flex; align-items: center; gap: 3px; }
+
+  .timeline-delete {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    transition: all 0.15s;
+    align-self: flex-start;
+  }
+  .timeline-delete:hover { background: rgba(193,18,31,0.15); color: #c1121f; }
+
+  /* Charts */
+  .chart-section { margin-bottom: 24px; }
+
+  .chart-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    color: var(--parchment-dark);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+  }
+
+  .bar-chart { display: flex; flex-direction: column; gap: 6px; }
+
+  .bar-row { display: flex; align-items: center; gap: 8px; }
+
+  .bar-label {
+    font-size: 0.78rem;
+    min-width: 80px;
+    text-align: right;
+    color: var(--text-dim);
+  }
+
+  .bar-track {
+    flex: 1;
+    height: 20px;
+    background: var(--panel2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 6px;
+  }
+
+  .bar-value {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    color: rgba(0,0,0,0.7);
+  }
+
+  .bar-count {
+    font-family: 'Cinzel', serif;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    min-width: 24px;
+  }
+
+  /* Stat cards */
+  .stat-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .stat-card-value {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.6rem;
+    color: var(--accent);
+  }
+
+  .stat-card-label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: var(--text-dim);
+    font-style: italic;
+    padding: 32px 0;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 700px) {
+    .add-entry-form { grid-template-columns: 1fr; }
+    .stats-tab { padding: 10px 12px; font-size: 0.58rem; }
+    .stats-header h2 { font-size: 0.9rem; }
+  }
+
+  /* ---- RESPONSIVE BREAKPOINT ---- */
+  @media (max-width: 700px) {
+    header h1 { font-size: 1.1rem; letter-spacing: 0.15em; }
+    header p { font-size: 0.65rem; }
+    .save-status { display: none; }
+    .hbtn { font-size: 0.55rem; padding: 4px 7px; }
+
+    .sidebar { display: none; }
+
+    .legend { display: none !important; }
+    .zoom-controls { bottom: 76px; }
+    .zbtn { width: 40px; height: 40px; font-size: 1.3rem; }
+    .zbtn.fit { height: 32px; font-size: 0.6rem; }
+
+    #mobile-panel { display: block; }
+    #mobile-open-btn { display: block; }
+    #mobile-country-banner { display: block; }
+    #sheet-backdrop { display: block; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    #sheet-backdrop.visible { opacity: 1; pointer-events: all; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>RISKY BUSINESS</h1>
+  <p>WORLD DOMINATION</p>
+  <div class="header-actions">
+    <span class="save-status" id="save-status"></span>
+    <button class="hbtn" onclick="openStats()" style="border-color:#e9c46a;color:#e9c46a;">📊 STATS</button>
+    <button class="hbtn" onclick="saveData()">SAVE</button>
+    <button class="hbtn danger" onclick="resetData()">RESET</button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="sidebar">
+    <div>
+      <div class="section-title">Commanders</div>
+      <div class="players-list" id="players-list"></div>
+    </div>
+    <div>
+      <div class="section-title">Territory</div>
+      <div class="territory-panel">
+        <div class="no-selection" id="no-selection">Click a territory on the map</div>
+        <div id="territory-detail" style="display:none;">
+          <div class="territory-name" id="territory-name"></div>
+          <div id="troop-entries"></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Scoreboard</div>
+      <div id="scoreboard" style="display:flex; flex-direction:column; gap:3px;"></div>
+    </div>
+  </div>
+
+  <div class="map-area">
+    <div id="map-wrapper">
+      <svg id="world-map" viewBox="0 0 2000 1001" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="zoom-controls">
+      <button class="zbtn" onclick="doZoom(1.3)" title="Zoom in">+</button>
+      <button class="zbtn" onclick="doZoom(0.77)" title="Zoom out">−</button>
+      <button class="zbtn fit" onclick="resetZoom()" title="Reset">FIT</button>
+    </div>
+
+    <div class="legend">
+      <div class="legend-title">PLAYERS</div>
+      <div id="legend-rows"></div>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<!-- MOBILE BOTTOM SHEET -->
+<div id="sheet-backdrop" onclick="closeSheet()"></div>
+<button id="mobile-open-btn" onclick="openSheet()">☰ MENU</button>
+<div id="mobile-country-banner">Tap a country</div>
+
+<div id="mobile-panel">
+  <div class="sheet-handle"></div>
+  <div class="sheet-tabs">
+    <button class="sheet-tab active" onclick="switchTab('territory')">Territory</button>
+    <button class="sheet-tab" onclick="switchTab('players')">Players</button>
+    <button class="sheet-tab" onclick="switchTab('scores')">Scores</button>
+  </div>
+  <div class="sheet-content">
+    <div class="sheet-pane active" id="mpane-territory">
+      <div class="no-selection" id="m-no-selection">Tap a territory on the map</div>
+      <div id="m-territory-detail" style="display:none;">
+        <div class="territory-name" id="m-territory-name"></div>
+        <div id="m-troop-entries"></div>
+      </div>
+    </div>
+    <div class="sheet-pane" id="mpane-players">
+      <div class="players-list" id="m-players-list"></div>
+    </div>
+    <div class="sheet-pane" id="mpane-scores">
+      <div id="m-scoreboard" style="display:flex;flex-direction:column;gap:4px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS OVERLAY -->
+<div id="stats-overlay">
+  <div class="stats-header">
+    <h2>💋 KISS STATS</h2>
+    <button class="hbtn" onclick="closeStats()">✕ CLOSE</button>
+  </div>
+  <div class="stats-tabs">
+    <button class="stats-tab active" onclick="switchStatsTab('log')">📋 Log</button>
+    <button class="stats-tab" onclick="switchStatsTab('timeline')">📅 Timeline</button>
+    <button class="stats-tab" onclick="switchStatsTab('charts')">📊 Charts</button>
+    <button class="stats-tab" onclick="switchStatsTab('leaderboard')">🏆 Leaderboard</button>
+  </div>
+  <div class="stats-body">
+
+    <!-- LOG TAB -->
+    <div class="stats-pane active" id="spane-log">
+      <div class="add-entry-form">
+        <div class="form-field full">
+          <div class="form-label">Name</div>
+          <input class="form-input" id="entry-name" type="text" placeholder="Their name…">
+        </div>
+        <div class="form-field">
+          <div class="form-label">Age</div>
+          <input class="form-input" id="entry-age" type="number" min="1" max="120" placeholder="Age">
+        </div>
+        <div class="form-field">
+          <div class="form-label">Date</div>
+          <input class="form-input" id="entry-date" type="date">
+        </div>
+        <div class="form-field">
+          <div class="form-label">Who kissed them</div>
+          <select class="form-select" id="entry-player"></select>
+        </div>
+        <div class="form-field">
+          <div class="form-label">Country</div>
+          <select class="form-select" id="entry-country"></select>
+        </div>
+        <div style="grid-column:1/-1;display:flex;flex-direction:row;align-items:center;gap:8px;padding:6px 0;">
+          <input type="checkbox" id="entry-tiebreaker" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;">
+          <label for="entry-tiebreaker" style="font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.1em;color:var(--text-dim);cursor:pointer;">🔥 Count towards tiebreaker</label>
+        </div>
+        <button class="add-entry-btn" onclick="addEntry()">+ ADD ENTRY</button>
+      </div>
+      <div class="timeline" id="log-list"></div>
+    </div>
+
+    <!-- TIMELINE TAB -->
+    <div class="stats-pane" id="spane-timeline">
+      <div class="timeline" id="timeline-list"></div>
+    </div>
+
+    <!-- CHARTS TAB -->
+    <div class="stats-pane" id="spane-charts">
+      <div class="stat-cards" id="stat-cards"></div>
+      <div class="chart-section">
+        <div class="chart-title">Kisses per person</div>
+        <div class="bar-chart" id="chart-player"></div>
+      </div>
+      <div class="chart-section">
+        <div class="chart-title">Kisses per country</div>
+        <div class="bar-chart" id="chart-country"></div>
+      </div>
+      <div class="chart-section">
+        <div class="chart-title">Age distribution</div>
+        <div class="bar-chart" id="chart-age"></div>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD TAB -->
+    <div class="stats-pane" id="spane-leaderboard">
+      <div id="leaderboard-content"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ---- PLAYERS ----
+const PLAYERS = [
+  { id: 1, name: 'Thom',    color: '#9b5de5' },
+  { id: 2, name: 'Thijmen', color: '#e63946' },
+  { id: 3, name: 'Thijs',   color: '#457b9d' },
+  { id: 4, name: 'Aidan',   color: '#2a9d8f' },
+  { id: 5, name: 'Jorik',   color: '#e9c46a' },
+  { id: 6, name: 'Chris',   color: '#f4732a' },
+];
+
+const COUNTRY_NAMES = {
+  4:"Afghanistan",8:"Albania",10:"Antarctica",12:"Algeria",16:"American Samoa",20:"Andorra",24:"Angola",28:"Antigua and Barbuda",32:"Argentina",36:"Australia",40:"Austria",44:"Bahamas",48:"Bahrain",50:"Bangladesh",52:"Barbados",56:"Belgium",60:"Bermuda",64:"Bhutan",68:"Bolivia",70:"Bosnia and Herzegovina",72:"Botswana",74:"Bouvet Island",76:"Brazil",84:"Belize",86:"Taiwan",90:"Solomon Islands",92:"British Virgin Islands",96:"Brunei",100:"Bulgaria",104:"Myanmar",108:"Burundi",112:"Belarus",116:"Cambodia",120:"Cameroon",124:"Canada",132:"Cape Verde",136:"Cayman Islands",140:"Central African Republic",144:"Sri Lanka",148:"Chad",152:"Chile",156:"China",158:"Taiwan",162:"Christmas Island",166:"Comoros",170:"Colombia",174:"Comoros",175:"Mauritius",178:"Mauritius",180:"Democratic Republic of the Congo",184:"Cook Islands",188:"Costa Rica",191:"Croatia",192:"Cuba",196:"Cyprus",203:"Czech Republic",204:"Benin",208:"Denmark",212:"Dominica",214:"Dominican Republic",218:"Ecuador",222:"El Salvador",226:"Equatorial Guinea",231:"Ethiopia",232:"Eritrea",238:"Falkland Islands",239:"South Georgia and South Sandwich Islands",242:"Fiji",246:"Finland",248:"French Guiana",250:"France",254:"French Guiana",258:"French Polynesia",260:"French Guiana",262:"Reunion",266:"Mozambique",268:"Mauritius",270:"Mauritius",275:"Palestine",276:"Germany",288:"Ghana",292:"Gibraltar",296:"Kiribati",300:"Greece",304:"Greenland",308:"Grenada",312:"Guadeloupe",316:"Guam",320:"Guatemala",324:"Guinea",328:"Guyana",332:"Haiti",334:"Heard Island and McDonald Islands",340:"Honduras",344:"Hong Kong",348:"Hungary",352:"Iceland",356:"India",360:"Indonesia",364:"Iran",368:"Iraq",372:"Ireland",376:"Israel",380:"Italy",383:"Kosovo",384:"Côte d'Ivoire",388:"Jamaica",392:"Japan",396:"Japan",398:"Kazakhstan",400:"Jordan",404:"Kenya",408:"North Korea",410:"South Korea",414:"Kuwait",417:"Kyrgyzstan",418:"Laos",422:"Lebanon",426:"Lesotho",428:"Latvia",430:"Liberia",434:"Libya",438:"Liechtenstein",440:"Lithuania",442:"Luxembourg",446:"Macao",450:"Madagascar",454:"Malawi",458:"Malaysia",462:"Maldives",466:"Mali",470:"Malta",474:"Martinique",478:"Mauritania",480:"Mauritius",484:"Mexico",492:"Monaco",496:"Mongolia",498:"Moldova",499:"Montenegro",500:"Montserrat",504:"Morocco",508:"Mozambique",512:"Oman",516:"Namibia",520:"Nauru",524:"Nepal",528:"Netherlands",531:"Curaçao",533:"Aruba",534:"Sint Maarten",535:"Caribbean Netherlands",540:"New Caledonia",548:"Vanuatu",554:"New Zealand",558:"Nicaragua",562:"Niger",566:"Nigeria",570:"Niue",574:"Norfolk Island",578:"Norway",580:"Northern Mariana Islands",581:"United States Minor Outlying Islands",583:"Federated States of Micronesia",584:"Marshall Islands",585:"Palau",586:"Pakistan",591:"Panama",598:"Papua New Guinea",600:"Paraguay",604:"Peru",608:"Philippines",612:"Pitcairn Islands",616:"Poland",620:"Portugal",624:"Guinea-Bissau",626:"Timor-Leste",630:"Puerto Rico",634:"Qatar",638:"Reunion",642:"Romania",643:"Russia",646:"Rwanda",652:"Saint Barthélemy",654:"Saint Helena, Ascension and Tristan da Cunha",659:"Saint Kitts and Nevis",660:"Anguilla",662:"Saint Lucia",666:"Saint Pierre and Miquelon",670:"Saint Vincent and the Grenadines",674:"San Marino",678:"São Tomé and Príncipe",682:"Saudi Arabia",686:"Senegal",688:"Serbia",690:"Seychelles",694:"Sierra Leone",702:"Malta",703:"Slovakia",704:"Vietnam",705:"Slovenia",706:"Somalia",710:"South Africa",716:"Zimbabwe",724:"Spain",728:"South Sudan",729:"Sudan",732:"Western Sahara",740:"Suriname",744:"Svalbard and Jan Mayen",748:"Eswatini",752:"Sweden",756:"Switzerland",760:"Syria",762:"Tajikistan",764:"Thailand",768:"Togo",772:"Tokelau",776:"Tonga",780:"Trinidad and Tobago",784:"United Arab Emirates",788:"Tunisia",792:"Turkey",795:"Turkmenistan",796:"Turks and Caicos Islands",798:"Tuvalu",800:"Uganda",804:"Ukraine",807:"North Macedonia",818:"Egypt",826:"United Kingdom",831:"Guernsey",832:"Jersey",833:"Isle of Man",834:"Tanzania",840:"United States",850:"United States Virgin Islands",854:"Burkina Faso",858:"Uruguay",860:"Uzbekistan",862:"Venezuela",876:"Wallis and Futuna",882:"Samoa",886:"Taiwan",887:"Yemen",894:"Zambia",
+};
+
+function getCountryName(id) { return COUNTRY_NAMES[parseInt(id)] || null; }
+
+// ---- CONTINENTS ----
+const CONTINENTS = {
+  'Europe': [8,40,56,100,191,196,203,208,246,250,276,300,348,372,380,440,442,528,578,616,620,642,703,705,724,752,756,804,826],
+  'Asia': [4,50,64,104,116,156,356,360,364,368,392,398,400,408,410,414,418,422,524,586,608,643,682,760,764,784,800,860,704,887],
+  'Africa': [12,24,120,180,208,231,288,404,426,434,450,454,504,508,562,566,646,686,694,706,710,736,768,788,800,894,716],
+  'North America': [124,192,214,222,320,332,340,484,558,591,840,630],
+  'South America': [32,68,76,152,170,218,600,604,858,862,858],
+  'Oceania': [36,554,598],
+};
+
+// Map country id → continent name
+const COUNTRY_CONTINENT = {};
+for (const [cont, ids] of Object.entries(CONTINENTS)) {
+  ids.forEach(id => { COUNTRY_CONTINENT[id] = cont; });
+}
+
+function getContinentController(continentName) {
+  const ids = CONTINENTS[continentName];
+  if (!ids || ids.length === 0) return null;
+  // Count territories won per player within this continent
+  const counts = {};
+  ids.forEach(id => {
+    const winner = getWinner(String(id));
+    if (winner) counts[winner] = (counts[winner] || 0) + 1;
+  });
+  // Need at least 3 countries
+  const best = Object.entries(counts).sort((a,b) => b[1]-a[1])[0];
+  if (!best || best[1] < 3) return null;
+  // Check nobody else has same count
+  const topCount = best[1];
+  const tied = Object.entries(counts).filter(([,c]) => c === topCount);
+  if (tied.length > 1) return null;
+  return parseInt(best[0]);
+}
+
+// ---- STATE ----
+let selectedPlayer = PLAYERS[0].id;
+let selectedCountry = null;
+let troops = {}; // { countryId: { playerId: count } }
+let tiebreakers = {}; // { countryId: { playerId: true/false } }
+let lastUpdated = {}; // { countryId: { playerId: timestamp } }
+let selectedEl = null;
+
+// ---- STORAGE ----
+const STORAGE_KEY = 'risky-business-v1';
+const JSONBIN_ID = '69c013cbc3097a1dd54b9dcf';
+const JSONBIN_KEY = '$2a$10$TjKftwh/7DpLfmx2r2ccj.okpkVZTpdNqZh7WycR9dB6ssH1nQF9K';
+
+async function saveData() {
+  const data = { troops, tiebreakers, lastUpdated, selectedPlayer, kissLog };
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+  try {
+    flashStatus('Saving…', false);
+    await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
+      body: JSON.stringify(data)
+    });
+    flashStatus('Saved ✓', true);
+  } catch(e) { flashStatus('Local only', false); }
+}
+
+async function loadSaved() {
+  try {
+    const resp = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, {
+      headers: { 'X-Master-Key': JSONBIN_KEY }
+    });
+    const json = await resp.json();
+    const d = json.record || json;
+    if (d && d.troops) {
+      troops = d.troops || {};
+      tiebreakers = d.tiebreakers || {};
+      lastUpdated = d.lastUpdated || {};
+      selectedPlayer = d.selectedPlayer || PLAYERS[0].id;
+      kissLog = d.kissLog || [];
+      flashStatus('Synced ✓', true);
+      renderAll();
+      updateMapColors();
+      return;
+    }
+  } catch(e) {}
+  // Fallback to localStorage
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (d.troops) troops = d.troops;
+    if (d.tiebreakers) tiebreakers = d.tiebreakers;
+    if (d.lastUpdated) lastUpdated = d.lastUpdated;
+    if (d.selectedPlayer) selectedPlayer = d.selectedPlayer;
+    if (d.kissLog) kissLog = d.kissLog || [];
+    flashStatus('Loaded ✓', true);
+  } catch(e) {}
+}
+
+function resetData() {
+  if (!confirm('Reset all troop data? This cannot be undone.')) return;
+  troops = {};
+  tiebreakers = {};
+  lastUpdated = {};
+  selectedCountry = null;
+  selectedPlayer = PLAYERS[0].id;
+  if (selectedEl) { selectedEl.classList.remove('selected'); selectedEl = null; }
+  localStorage.removeItem(STORAGE_KEY);
+  updateMapColors();
+  renderAll();
+  flashStatus('Reset ✓', true);
+}
+
+let statusTimer = null;
+function flashStatus(msg, ok) {
+  const el = document.getElementById('save-status');
+  el.textContent = msg;
+  el.className = 'save-status' + (ok ? ' ok' : '');
+  clearTimeout(statusTimer);
+  statusTimer = setTimeout(() => { el.textContent = ''; el.className = 'save-status'; }, 2800);
+}
+
+setInterval(saveData, 60000);
+
+// ---- ZOOM & PAN ----
+let scale = 1, panX = 0, panY = 0;
+let isPanning = false, didPan = false;
+let panStart = {x:0,y:0}, panOrigin = {x:0,y:0};
+
+function applyTransform() {
+  document.getElementById('world-map').style.transform =
+    `translate(${panX}px,${panY}px) scale(${scale})`;
+}
+
+function doZoom(factor, cx, cy) {
+  const wrap = document.getElementById('map-wrapper');
+  const rect = wrap.getBoundingClientRect();
+  const px = (cx !== undefined ? cx : rect.left + rect.width/2) - rect.left;
+  const py = (cy !== undefined ? cy : rect.top + rect.height/2) - rect.top;
+  const ns = Math.min(Math.max(scale * factor, 0.45), 14);
+  const sd = ns / scale;
+  panX = px - sd*(px - panX);
+  panY = py - sd*(py - panY);
+  scale = ns;
+  applyTransform();
+}
+
+function resetZoom() { scale=1; panX=0; panY=0; applyTransform(); }
+
+const wrap = document.getElementById('map-wrapper');
+
+wrap.addEventListener('wheel', e => {
+  e.preventDefault();
+  doZoom(e.deltaY < 0 ? 1.15 : 0.87, e.clientX, e.clientY);
+}, { passive: false });
+
+wrap.addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  isPanning = true; didPan = false;
+  panStart = {x: e.clientX, y: e.clientY};
+  panOrigin = {x: panX, y: panY};
+  wrap.classList.add('grabbing');
+});
+
+window.addEventListener('mousemove', e => {
+  if (!isPanning) return;
+  const dx = e.clientX - panStart.x;
+  const dy = e.clientY - panStart.y;
+  if (Math.abs(dx) > 3 || Math.abs(dy) > 3) didPan = true;
+  panX = panOrigin.x + dx;
+  panY = panOrigin.y + dy;
+  applyTransform();
+});
+
+window.addEventListener('mouseup', () => {
+  isPanning = false;
+  wrap.classList.remove('grabbing');
+});
+
+// ---- LOAD MAP ----
+async function loadMap() {
+  const resp = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+  const world = await resp.json();
+
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js');
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js');
+  renderMap(world);
+}
+
+function loadScript(src) {
+  return new Promise(res => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res;
+    document.head.appendChild(s);
+  });
+}
+
+function renderMap(world) {
+  const svg = document.getElementById('world-map');
+  const countries = topojson.feature(world, world.objects.countries);
+
+  const projection = d3.geoNaturalEarth1().scale(310).translate([1000, 490]);
+  const path = d3.geoPath().projection(projection);
+  const tooltip = document.getElementById('tooltip');
+
+  countries.features.forEach(feature => {
+    const id = feature.id;
+    const name = getCountryName(id);
+    const el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    el.setAttribute('d', path(feature));
+    el.setAttribute('data-id', id);
+    el.style.fill = '#2a4060';
+
+    el.addEventListener('mouseenter', e => {
+      tooltip.style.display = 'block';
+      tooltip.textContent = name;
+      posTooltip(e);
+    });
+    el.addEventListener('mousemove', posTooltip);
+    el.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+    el.addEventListener('click', e => {
+      if (didPan) return;
+      e.stopPropagation();
+      selectCountry(id, name, el);
+    });
+
+    svg.appendChild(el);
+  });
+
+  updateMapColors();
+}
+
+function posTooltip(e) {
+  const t = document.getElementById('tooltip');
+  t.style.left = (e.clientX + 14) + 'px';
+  t.style.top = (e.clientY - 8) + 'px';
+}
+
+// ---- GAME LOGIC ----
+function getWinner(cid) {
+  const t = troops[cid];
+  if (!t) return null;
+
+  // Find the highest score among players with any points
+  let bestScore = 0;
+  for (const score of Object.values(t)) {
+    if (score > bestScore) bestScore = score;
+  }
+  if (bestScore === 0) return null;
+
+  // Collect all players tied at that score
+  let tied = Object.entries(t)
+    .filter(([pid, score]) => score === bestScore)
+    .map(([pid]) => parseInt(pid));
+
+  // No tie — outright winner
+  if (tied.length === 1) return tied[0];
+
+  // Tiebreaker 1: check tiebreaker toggles for this country
+  const tb = tiebreakers[cid] || {};
+    const maxTb = Math.max(...tied.map(pid => tb[pid] || 0));
+    const tbOn = maxTb > 0 ? tied.filter(pid => (tb[pid] || 0) === maxTb) : tied;
+    if (tbOn.length === 1) return tbOn[0];
+
+    const remaining = tbOn;
+
+// Tiebreaker 2: if still tied, most recently updated troop wins
+  const times = lastUpdated[cid] || {};
+  return remaining.reduce((latest, pid) => {
+    return (times[pid] || 0) > (times[latest] || 0) ? pid : latest;
+  });
+}
+
+function countTerritories(pid) {
+  let n = 0;
+  for (const cid of Object.keys(troops)) { if (getWinner(cid) === pid) n++; }
+  return n;
+}
+
+function selectCountry(id, name, el) {
+  if (selectedEl) selectedEl.classList.remove('selected');
+  selectedEl = el; el.classList.add('selected');
+  selectedCountry = { id, name };
+  renderTerritoryPanel();
+}
+
+function changeTroops(pid, delta) {
+  if (!selectedCountry) return;
+  const cid = selectedCountry.id;
+  if (!troops[cid]) troops[cid] = {};
+  const newVal = Math.max(0, (troops[cid][pid] || 0) + delta);
+  troops[cid][pid] = newVal;
+  if (!lastUpdated[cid]) lastUpdated[cid] = {};
+  lastUpdated[cid][pid] = Date.now();
+  document.getElementById('tc-' + pid).textContent = troops[cid][pid];
+  updateMapColors();
+  renderPlayers();
+  renderScoreboard();
+  renderLegend();
+}
+
+function changeTiebreaker(pid, delta) {
+  if (!selectedCountry) return;
+  const cid = selectedCountry.id;
+  if (!tiebreakers[cid]) tiebreakers[cid] = {};
+  tiebreakers[cid][pid] = Math.max(0, (tiebreakers[cid][pid] || 0) + delta);
+  updateMapColors();
+  renderPlayers();
+  renderScoreboard();
+  renderLegend();
+  renderTerritoryPanel();
+}
+
+function hexToRgb(hex) {
+  return `${parseInt(hex.slice(1,3),16)},${parseInt(hex.slice(3,5),16)},${parseInt(hex.slice(5,7),16)}`;
+}
+
+function updateMapColors() {
+  document.querySelectorAll('#world-map path').forEach(p => {
+    const id = p.getAttribute('data-id');
+    const winner = getWinner(id);
+    if (winner) {
+      const pl = PLAYERS.find(x => x.id === winner);
+      if (pl) {
+        // Check if this country's continent is controlled by this player
+        const cont = COUNTRY_CONTINENT[parseInt(id)];
+        const contController = cont ? getContinentController(cont) : null;
+        const hasContinentBonus = contController === winner;
+        p.style.fill = pl.color;
+        p.style.opacity = '0.82';
+        p.style.stroke = hasContinentBonus ? '#fff' : '#1a3050';
+        p.style.strokeWidth = hasContinentBonus ? '1.5' : '0.4';
+        return;
+      }
+    }
+    p.style.fill = '#2a4060';
+    p.style.opacity = '1';
+    p.style.stroke = '#1a3050';
+    p.style.strokeWidth = '0.4';
+  });
+  renderContinentBadges();
+}
+
+function renderContinentBadges() {
+  let el = document.getElementById('continent-badges');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'continent-badges';
+    el.style.cssText = 'margin-top:8px;';
+    const sb = document.getElementById('scoreboard');
+    sb.parentNode.insertBefore(el, sb);
+  }
+  const controlled = Object.entries(CONTINENTS)
+    .map(([name]) => ({ name, controller: getContinentController(name) }))
+    .filter(c => c.controller);
+
+  if (controlled.length === 0) { el.innerHTML = ''; return; }
+
+  const section = document.createElement('div');
+  section.innerHTML = `<div class="section-title" style="margin-bottom:6px;">Continents</div>`;
+  controlled.forEach(({ name, controller }) => {
+    const pl = PLAYERS.find(p => p.id === controller);
+    if (!pl) return;
+    const badge = document.createElement('div');
+    badge.style.cssText = `display:flex;align-items:center;gap:6px;padding:4px 6px;background:${hexToRgba(pl.color,0.12)};border:1px solid ${pl.color};border-radius:4px;margin-bottom:4px;`;
+    badge.innerHTML = `
+      <span style="width:8px;height:8px;border-radius:50%;background:${pl.color};box-shadow:0 0 4px ${pl.color};flex-shrink:0"></span>
+      <span style="font-family:'Cinzel',serif;font-size:0.65rem;flex:1;">${name}</span>
+      <span style="font-size:0.7rem;color:${pl.color};">👑 ${pl.name}</span>
+    `;
+    section.appendChild(badge);
+  });
+  el.innerHTML = '';
+  el.appendChild(section);
+}
+
+// ---- QUICK-ADD from territory panel ----
+function quickAddEntry(countryId, countryName, playerId) {
+  openStats();
+  switchStatsTab('log');
+  // Pre-fill the form
+  setTimeout(() => {
+    document.getElementById('entry-player').value = playerId;
+    document.getElementById('entry-country').value = countryId;
+    document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('entry-name').focus();
+  }, 100);
+}
+function hexToRgba(hex, a) {
+  return `rgba(${parseInt(hex.slice(1,3),16)},${parseInt(hex.slice(3,5),16)},${parseInt(hex.slice(5,7),16)},${a})`;
+}
+
+function renderPlayers() {
+  const list = document.getElementById('players-list');
+  list.innerHTML = '';
+  PLAYERS.forEach(p => {
+    const terr = countTerritories(p.id);
+    const div = document.createElement('div');
+    div.className = 'player-card' + (selectedPlayer === p.id ? ' active' : '');
+    div.style.setProperty('--pc', p.color);
+    div.style.setProperty('--pg', hexToRgba(p.color, 0.22));
+    div.innerHTML = `
+      <div class="player-card-header">
+        <div class="player-dot" style="background:${p.color};box-shadow:0 0 6px ${p.color}"></div>
+        <div class="player-name">${p.name}</div>
+      </div>
+      <div class="player-territories">${terr} ${terr===1?'territory':'territories'} controlled</div>
+    `;
+    div.onclick = () => { selectedPlayer = p.id; renderAll(); };
+    list.appendChild(div);
+  });
+}
+
+function renderTerritoryPanel() {
+  document.getElementById('no-selection').style.display = selectedCountry ? 'none' : 'block';
+  document.getElementById('territory-detail').style.display = selectedCountry ? 'block' : 'none';
+  if (!selectedCountry) return;
+
+  document.getElementById('territory-name').textContent = selectedCountry.name;
+  const container = document.getElementById('troop-entries');
+  container.innerHTML = '';
+  const cid = selectedCountry.id;
+  if (!troops[cid]) troops[cid] = {};
+
+  // Quick-add button
+  const qaBtn = document.createElement('button');
+  qaBtn.style.cssText = `width:100%;margin-bottom:8px;padding:6px;background:none;border:1px dashed var(--border);border-radius:3px;color:var(--text-dim);font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.1em;cursor:pointer;transition:all 0.15s;`;
+  qaBtn.textContent = '💋 LOG A KISS HERE';
+  qaBtn.onmouseover = () => { qaBtn.style.borderColor = 'var(--accent)'; qaBtn.style.color = 'var(--accent)'; };
+  qaBtn.onmouseout = () => { qaBtn.style.borderColor = 'var(--border)'; qaBtn.style.color = 'var(--text-dim)'; };
+  qaBtn.onclick = () => quickAddEntry(cid, selectedCountry.name, selectedPlayer);
+  container.appendChild(qaBtn);
+
+  PLAYERS.forEach(p => {
+    const count = troops[cid][p.id] || 0;
+    if (!tiebreakers[cid]) tiebreakers[cid] = {};
+    const tbVal = tiebreakers[cid][p.id] || 0;
+    const row = document.createElement('div');
+    row.className = 'troop-entry';
+    row.innerHTML = `
+      <div class="troop-dot" style="background:${p.color};box-shadow:0 0 4px ${p.color}"></div>
+      <div class="troop-player">${p.name}</div>
+      <div class="troop-controls">
+        <button class="troop-btn" onclick="changeTroops(${p.id},-5)">−5</button>
+        <button class="troop-btn" onclick="changeTroops(${p.id},-1)">−</button>
+        <div class="troop-count" id="tc-${p.id}">${count}</div>
+        <button class="troop-btn" onclick="changeTroops(${p.id},1)">+</button>
+        <button class="troop-btn" onclick="changeTroops(${p.id},5)">+5</button>
+        <button class="troop-btn" onclick="changeTiebreaker(${p.id},-1)"
+          style="margin-left:4px;border-color:${tbVal>0?p.color:'var(--border)'};color:${tbVal>0?p.color:'var(--text-dim)'};background:${tbVal>0?'rgba('+hexToRgb(p.color)+',0.15)':'var(--panel)'};">−</button>
+          <span style="font-family:'Cinzel',serif;font-size:0.75rem;min-width:18px;text-align:center;color:${tbVal>0?p.color:'var(--text-dim)'};">🔥${tbVal>0?tbVal:''}</span>
+          <button class="troop-btn" onclick="changeTiebreaker(${p.id},1)"
+          style="border-color:${tbVal>0?p.color:'var(--border)'};color:${tbVal>0?p.color:'var(--text-dim)'};background:${tbVal>0?'rgba('+hexToRgb(p.color)+',0.15)':'var(--panel)'};">+</button>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function renderScoreboard() {
+  const sb = document.getElementById('scoreboard');
+  sb.innerHTML = '';
+  const scored = PLAYERS.map(p => ({
+    ...p,
+    territories: countTerritories(p.id),
+    points: Object.values(troops).reduce((s,t) => s+(t[p.id]||0), 0)
+  })).sort((a,b) => b.territories - a.territories || b.points - a.points);
+
+  scored.forEach((p, i) => {
+    const continents = Object.keys(CONTINENTS).filter(c => getContinentController(c) === p.id).length;
+    const row = document.createElement('div');
+    row.style.cssText = `display:flex;align-items:center;gap:8px;padding:4px 6px;background:${p.id===selectedPlayer?'rgba(255,255,255,0.04)':'transparent'};border-radius:3px;cursor:pointer;`;
+    row.innerHTML = `
+      <span style="font-family:Cinzel,serif;font-size:0.57rem;color:var(--text-dim);width:14px;">${i+1}.</span>
+      <span style="width:8px;height:8px;border-radius:50%;background:${p.color};flex-shrink:0;box-shadow:0 0 4px ${p.color}"></span>
+      <span style="flex:1;font-size:0.75rem;">${p.name}</span>
+      ${continents > 0 ? `<span title="${continents} continent${continents>1?'s':''}" style="font-size:0.7rem;">👑${continents}</span>` : ''}
+      <span style="font-family:Cinzel,serif;font-size:0.68rem;color:${p.color};">${p.territories}</span>
+    `;
+    row.onclick = () => { selectedPlayer = p.id; renderAll(); };
+    sb.appendChild(row);
+  });
+}
+
+function renderLegend() {
+  const rows = document.getElementById('legend-rows');
+  rows.innerHTML = '';
+  PLAYERS.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'legend-row';
+    row.innerHTML = `
+      <div class="legend-dot" style="background:${p.color};box-shadow:0 0 4px ${p.color}"></div>
+      <div class="legend-name">${p.name}</div>
+      <div class="legend-count">${countTerritories(p.id)}</div>
+    `;
+    rows.appendChild(row);
+  });
+}
+
+function renderAll() {
+  renderPlayers();
+  renderTerritoryPanel();
+  renderScoreboard();
+  renderLegend();
+  renderContinentBadges();
+}
+
+// ---- MOBILE SHEET ----
+function openSheet() {
+  document.getElementById('mobile-panel').classList.add('open');
+  document.getElementById('sheet-backdrop').classList.add('visible');
+  document.getElementById('mobile-open-btn').style.display = 'none';
+  renderMobileAll();
+}
+
+function closeSheet() {
+  document.getElementById('mobile-panel').classList.remove('open');
+  document.getElementById('sheet-backdrop').classList.remove('visible');
+  document.getElementById('mobile-open-btn').style.display = 'block';
+}
+
+let activeTab = 'territory';
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.sheet-tab').forEach((t, i) => {
+    const names = ['territory','players','scores'];
+    t.classList.toggle('active', names[i] === tab);
+  });
+  document.querySelectorAll('.sheet-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('mpane-' + tab).classList.add('active');
+  renderMobileAll();
+}
+
+function renderMobileAll() {
+  renderMobileTerritoryPanel();
+  renderMobilePlayers();
+  renderMobileScoreboard();
+}
+
+function renderMobileTerritoryPanel() {
+  const hasSel = !!selectedCountry;
+  document.getElementById('m-no-selection').style.display = hasSel ? 'none' : 'block';
+  document.getElementById('m-territory-detail').style.display = hasSel ? 'block' : 'none';
+  if (!hasSel) return;
+
+  document.getElementById('m-territory-name').textContent = selectedCountry.name;
+  const container = document.getElementById('m-troop-entries');
+  container.innerHTML = '';
+  const cid = selectedCountry.id;
+  if (!troops[cid]) troops[cid] = {};
+
+  PLAYERS.forEach(p => {
+    const count = troops[cid][p.id] || 0;
+    if (!tiebreakers[cid]) tiebreakers[cid] = {};
+    const tbOn = !!(tiebreakers[cid][p.id]);
+    const row = document.createElement('div');
+    row.className = 'troop-entry';
+    row.innerHTML = `
+      <div class="troop-dot" style="background:${p.color};box-shadow:0 0 4px ${p.color}"></div>
+      <div class="troop-player">${p.name}</div>
+      <div class="troop-controls">
+        <button class="troop-btn" onclick="changeTroops(${p.id},-5);renderMobileAll()">−5</button>
+        <button class="troop-btn" onclick="changeTroops(${p.id},-1);renderMobileAll()">−</button>
+        <div class="troop-count" id="mtc-${p.id}">${count}</div>
+        <button class="troop-btn" onclick="changeTroops(${p.id},1);renderMobileAll()">+</button>
+        <button class="troop-btn" onclick="changeTroops(${p.id},5);renderMobileAll()">+5</button>
+        <button class="troop-btn tb-toggle" onclick="toggleTiebreaker(${p.id});renderMobileAll()"
+          style="margin-left:4px;min-width:34px;border-color:${tbOn?p.color:'var(--border)'};color:${tbOn?p.color:'var(--text-dim)'};background:${tbOn?'rgba('+hexToRgb(p.color)+',0.15)':'var(--panel)'};">TB</button>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function renderMobilePlayers() {
+  const list = document.getElementById('m-players-list');
+  list.innerHTML = '';
+  PLAYERS.forEach(p => {
+    const terr = countTerritories(p.id);
+    const div = document.createElement('div');
+    div.className = 'player-card' + (selectedPlayer === p.id ? ' active' : '');
+    div.style.setProperty('--pc', p.color);
+    div.style.setProperty('--pg', hexToRgba(p.color, 0.22));
+    div.innerHTML = `
+      <div class="player-card-header">
+        <div class="player-dot" style="background:${p.color};box-shadow:0 0 6px ${p.color}"></div>
+        <div class="player-name">${p.name}</div>
+      </div>
+      <div class="player-territories">${terr} ${terr===1?'territory':'territories'} controlled</div>
+    `;
+    div.onclick = () => { selectedPlayer = p.id; renderAll(); renderMobileAll(); };
+    list.appendChild(div);
+  });
+}
+
+function renderMobileScoreboard() {
+  const sb = document.getElementById('m-scoreboard');
+  sb.innerHTML = '';
+  const scored = PLAYERS.map(p => ({
+    ...p,
+    territories: countTerritories(p.id),
+    points: Object.values(troops).reduce((s,t) => s+(t[p.id]||0), 0)
+  })).sort((a,b) => b.territories - a.territories || b.points - a.points);
+
+  scored.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = `display:flex;align-items:center;gap:10px;padding:8px 6px;background:${p.id===selectedPlayer?'rgba(255,255,255,0.04)':'transparent'};border-radius:3px;cursor:pointer;border-bottom:1px solid var(--border);`;
+    row.innerHTML = `
+      <span style="font-family:Cinzel,serif;font-size:0.65rem;color:var(--text-dim);width:16px;">${i+1}.</span>
+      <span style="width:10px;height:10px;border-radius:50%;background:${p.color};flex-shrink:0;box-shadow:0 0 4px ${p.color}"></span>
+      <span style="flex:1;font-size:0.9rem;">${p.name}</span>
+      <span style="font-family:Cinzel,serif;font-size:0.8rem;color:${p.color};">${p.territories} terr.</span>
+    `;
+    row.onclick = () => { selectedPlayer = p.id; renderAll(); renderMobileAll(); };
+    sb.appendChild(row);
+  });
+}
+
+// Update country banner on mobile
+function updateMobileBanner() {
+  const banner = document.getElementById('mobile-country-banner');
+  if (banner) banner.textContent = selectedCountry ? selectedCountry.name : 'Tap a country';
+}
+
+// ---- TOUCH PAN & PINCH ZOOM ----
+let touches = {};
+let lastPinchDist = null;
+
+wrap.addEventListener('touchstart', e => {
+  e.preventDefault();
+  didPan = false;
+  Array.from(e.changedTouches).forEach(t => { touches[t.identifier] = {x: t.clientX, y: t.clientY}; });
+
+  if (e.touches.length === 1) {
+    panStart = {x: e.touches[0].clientX, y: e.touches[0].clientY};
+    panOrigin = {x: panX, y: panY};
+    isPanning = true;
+  }
+  if (e.touches.length === 2) {
+    isPanning = false;
+    lastPinchDist = getPinchDist(e.touches);
+  }
+}, { passive: false });
+
+wrap.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (e.touches.length === 1 && isPanning) {
+    const dx = e.touches[0].clientX - panStart.x;
+    const dy = e.touches[0].clientY - panStart.y;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) didPan = true;
+    panX = panOrigin.x + dx;
+    panY = panOrigin.y + dy;
+    applyTransform();
+  }
+  if (e.touches.length === 2) {
+    const dist = getPinchDist(e.touches);
+    if (lastPinchDist) {
+      const factor = dist / lastPinchDist;
+      const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      doZoom(factor, cx, cy);
+      didPan = true;
+    }
+    lastPinchDist = dist;
+  }
+}, { passive: false });
+
+wrap.addEventListener('touchend', e => {
+  isPanning = false;
+  lastPinchDist = null;
+  // treat as tap if no significant movement
+  if (!didPan && e.changedTouches.length === 1) {
+    const t = e.changedTouches[0];
+    // find element under touch
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    if (el && el.tagName === 'path' && el.getAttribute('data-id')) {
+      const id = el.getAttribute('data-id');
+      const name = getCountryName(id);
+      if (name) {
+        selectCountry(id, name, el);
+        updateMobileBanner();
+        // auto-open sheet on territory tap
+        if (window.innerWidth <= 700) {
+          openSheet();
+          switchTab('territory');
+        }
+      }
+    }
+  }
+  touches = {};
+}, { passive: false });
+
+function getPinchDist(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.sqrt(dx*dx + dy*dy);
+}
+
+// Also update banner on desktop click
+const origSelectCountry = selectCountry;
+// patch selectCountry to also update banner
+const _origSelect = selectCountry;
+window.selectCountry = function(id, name, el) {
+  _origSelect(id, name, el);
+  updateMobileBanner();
+};
+
+
+// ---- STATS ----
+let kissLog = []; // [{ id, name, age, date, playerId, country }]
+
+function openStats() {
+  document.getElementById('stats-overlay').classList.add('open');
+  populateStatsForm();
+  renderStats();
+}
+
+function closeStats() {
+  document.getElementById('stats-overlay').classList.remove('open');
+}
+
+let activeStatsTab = 'log';
+function switchStatsTab(tab) {
+  activeStatsTab = tab;
+  document.querySelectorAll('.stats-tab').forEach((t, i) => {
+    const names = ['log','timeline','charts','leaderboard'];
+    t.classList.toggle('active', names[i] === tab);
+  });
+  document.querySelectorAll('.stats-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('spane-' + tab).classList.add('active');
+  renderStats();
+}
+
+function populateStatsForm() {
+  // Players dropdown
+  const pSel = document.getElementById('entry-player');
+  pSel.innerHTML = PLAYERS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+
+  // Country dropdown — sorted alphabetically
+  const cSel = document.getElementById('entry-country');
+  const sorted = Object.entries(COUNTRY_NAMES).sort((a,b) => a[1].localeCompare(b[1]));
+  cSel.innerHTML = `<option value="">— Unknown —</option>` +
+    sorted.map(([id, name]) => `<option value="${id}">${name}</option>`).join('');
+
+  // Default date to today
+  const dateEl = document.getElementById('entry-date');
+  if (!dateEl.value) dateEl.value = new Date().toISOString().split('T')[0];
+}
+
+function addEntry() {
+  const name = document.getElementById('entry-name').value.trim();
+  if (!name) { alert('Please enter a name'); return; }
+  const age = parseInt(document.getElementById('entry-age').value) || null;
+  const date = document.getElementById('entry-date').value || new Date().toISOString().split('T')[0];
+  const playerId = parseInt(document.getElementById('entry-player').value);
+  const country = document.getElementById('entry-country').value || null;
+  const countryName = country ? COUNTRY_NAMES[parseInt(country)] || null : null;
+
+  const entry = {
+    id: Date.now(),
+    name,
+    age,
+    date,
+    playerId,
+    country,
+    countryName,
+  };
+
+  kissLog.unshift(entry); // newest first
+
+  // Also add 1 point on the map for this player in this country
+  if (country) {
+    if (!troops[country]) troops[country] = {};
+    troops[country][playerId] = (troops[country][playerId] || 0) + 1;
+    if (!lastUpdated[country]) lastUpdated[country] = {};
+    lastUpdated[country][playerId] = entry.id;
+    updateMapColors();
+    renderAll();
+  }
+
+  document.getElementById('entry-name').value = '';
+  document.getElementById('entry-age').value = '';
+  saveData();
+  renderStats();
+}
+
+function deleteEntry(id) {
+  if (!confirm('Delete this entry?')) return;
+  kissLog = kissLog.filter(e => e.id !== id);
+  saveData();
+  renderStats();
+}
+
+function renderStats() {
+  renderLogList();
+  renderTimeline();
+  renderCharts();
+  renderLeaderboard();
+}
+
+function entryCard(entry, showDelete = true) {
+  const player = PLAYERS.find(p => p.id === entry.playerId);
+  const dateStr = entry.date ? new Date(entry.date + 'T12:00:00').toLocaleDateString('nl-NL', { day:'numeric', month:'short', year:'numeric' }) : '?';
+  const del = showDelete ? `<button class="timeline-delete" onclick="deleteEntry(${entry.id})">✕</button>` : '';
+  return `
+    <div class="timeline-entry">
+      <div class="timeline-dot" style="background:${player?.color||'#888'};color:${player?.color||'#888'}"></div>
+      <div class="timeline-body">
+        <div class="timeline-name">${entry.name}${entry.age ? ` <span style="font-family:Crimson Text,serif;font-weight:400;font-size:0.8rem;color:var(--text-dim)">(${entry.age})</span>` : ''}</div>
+        <div class="timeline-meta">
+          <span>👤 ${player?.name || '?'}</span>
+          ${entry.countryName ? `<span>🌍 ${entry.countryName}</span>` : ''}
+          <span>📅 ${dateStr}</span>
+        </div>
+      </div>
+      ${del}
+    </div>
+  `;
+}
+
+function renderLogList() {
+  const el = document.getElementById('log-list');
+  if (kissLog.length === 0) {
+    el.innerHTML = '<div class="empty-state">No entries yet. Add your first one above!</div>';
+    return;
+  }
+  el.innerHTML = kissLog.map(e => entryCard(e)).join('');
+}
+
+function renderTimeline() {
+  const el = document.getElementById('timeline-list');
+  if (kissLog.length === 0) {
+    el.innerHTML = '<div class="empty-state">No entries yet.</div>';
+    return;
+  }
+  // Sort by date ascending for timeline
+  const sorted = [...kissLog].sort((a,b) => (a.date||'').localeCompare(b.date||''));
+  el.innerHTML = sorted.map(e => entryCard(e)).join('');
+}
+
+function renderCharts() {
+  if (kissLog.length === 0) {
+    ['chart-player','chart-country','chart-age','stat-cards'].forEach(id => {
+      document.getElementById(id).innerHTML = '<div class="empty-state">No data yet.</div>';
+    });
+    return;
+  }
+
+  // Stat cards
+  const avgAge = kissLog.filter(e => e.age).reduce((s,e) => s+e.age, 0) / (kissLog.filter(e=>e.age).length || 1);
+  const countries = new Set(kissLog.filter(e=>e.country).map(e=>e.country)).size;
+  document.getElementById('stat-cards').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-card-value">${kissLog.length}</div>
+      <div class="stat-card-label">Total entries</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-value">${avgAge ? avgAge.toFixed(1) : '?'}</div>
+      <div class="stat-card-label">Avg age</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-value">${countries}</div>
+      <div class="stat-card-label">Countries</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-value">${Math.min(...kissLog.filter(e=>e.age).map(e=>e.age)) || '?'}</div>
+      <div class="stat-card-label">Youngest</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-value">${Math.max(...kissLog.filter(e=>e.age).map(e=>e.age)) || '?'}</div>
+      <div class="stat-card-label">Oldest</div>
+    </div>
+  `;
+
+  // Per player bar chart
+  const playerCounts = PLAYERS.map(p => ({ label: p.name, color: p.color, count: kissLog.filter(e=>e.playerId===p.id).length }))
+    .sort((a,b) => b.count - a.count);
+  const maxP = Math.max(...playerCounts.map(p=>p.count), 1);
+  document.getElementById('chart-player').innerHTML = playerCounts.map(p => `
+    <div class="bar-row">
+      <div class="bar-label">${p.label}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${(p.count/maxP*100)}%;background:${p.color};">
+          ${p.count > 0 ? `<span class="bar-value">${p.count}</span>` : ''}
+        </div>
+      </div>
+      <div class="bar-count">${p.count}</div>
+    </div>
+  `).join('');
+
+  // Per country bar chart (top 10)
+  const countryCounts = {};
+  kissLog.forEach(e => { if (e.countryName) countryCounts[e.countryName] = (countryCounts[e.countryName]||0)+1; });
+  const topCountries = Object.entries(countryCounts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const maxC = Math.max(...topCountries.map(c=>c[1]), 1);
+  document.getElementById('chart-country').innerHTML = topCountries.length ? topCountries.map(([name,count]) => `
+    <div class="bar-row">
+      <div class="bar-label">${name}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${count/maxC*100}%;background:var(--accent);">
+          <span class="bar-value">${count}</span>
+        </div>
+      </div>
+      <div class="bar-count">${count}</div>
+    </div>
+  `).join('') : '<div class="empty-state">No country data.</div>';
+
+  // Age distribution (buckets of 5 years)
+  const ageBuckets = {};
+  kissLog.filter(e=>e.age).forEach(e => {
+    const bucket = Math.floor(e.age/5)*5;
+    const label = `${bucket}–${bucket+4}`;
+    ageBuckets[label] = (ageBuckets[label]||0)+1;
+  });
+  const sortedBuckets = Object.entries(ageBuckets).sort((a,b)=>parseInt(a[0])-parseInt(b[0]));
+  const maxA = Math.max(...sortedBuckets.map(b=>b[1]), 1);
+  document.getElementById('chart-age').innerHTML = sortedBuckets.length ? sortedBuckets.map(([label,count]) => `
+    <div class="bar-row">
+      <div class="bar-label">${label}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${count/maxA*100}%;background:#c77dff;">
+          <span class="bar-value">${count}</span>
+        </div>
+      </div>
+      <div class="bar-count">${count}</div>
+    </div>
+  `).join('') : '<div class="empty-state">No age data.</div>';
+}
+
+function renderLeaderboard() {
+  const el = document.getElementById('leaderboard-content');
+  if (kissLog.length === 0) {
+    el.innerHTML = '<div class="empty-state">No entries yet.</div>';
+    return;
+  }
+
+  const ranked = PLAYERS.map(p => {
+    const entries = kissLog.filter(e => e.playerId === p.id);
+    const avgAge = entries.filter(e=>e.age).reduce((s,e)=>s+e.age,0) / (entries.filter(e=>e.age).length||1);
+    const countries = new Set(entries.filter(e=>e.country).map(e=>e.country)).size;
+    return { ...p, entries, count: entries.length, avgAge, countries };
+  }).sort((a,b) => b.count - a.count);
+
+  el.innerHTML = ranked.map((p, i) => `
+    <div style="background:var(--panel2);border:1px solid ${i===0?p.color:'var(--border)'};border-radius:6px;padding:14px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <span style="font-family:'Cinzel Decorative',serif;font-size:1.3rem;color:${i===0?'#d4a843':i===1?'#aaa':i===2?'#cd7f32':'var(--text-dim)'};">${i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`}</span>
+        <span style="width:12px;height:12px;border-radius:50%;background:${p.color};box-shadow:0 0 6px ${p.color};flex-shrink:0"></span>
+        <span style="font-family:'Cinzel',serif;font-size:1rem;font-weight:700;flex:1">${p.name}</span>
+        <span style="font-family:'Cinzel Decorative',serif;font-size:1.4rem;color:${p.color}">${p.count}</span>
+      </div>
+      <div style="display:flex;gap:16px;font-size:0.78rem;color:var(--text-dim);flex-wrap:wrap;">
+        <span>📊 Avg age: <b style="color:var(--text)">${p.entries.filter(e=>e.age).length ? p.avgAge.toFixed(1) : '?'}</b></span>
+        <span>🌍 Countries: <b style="color:var(--text)">${p.countries}</b></span>
+      </div>
+      ${p.entries.length ? `
+        <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px;">
+          <div style="font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.15em;color:var(--text-dim);margin-bottom:6px;">RECENT</div>
+          ${p.entries.slice(0,3).map(e => {
+            const dateStr = e.date ? new Date(e.date+'T12:00:00').toLocaleDateString('nl-NL',{day:'numeric',month:'short'}) : '';
+            return `<div style="font-size:0.8rem;padding:2px 0;color:var(--text)">${e.name}${e.age?` (${e.age})`:''} ${e.countryName?`• ${e.countryName}`:''} ${dateStr?`• ${dateStr}`:''}</div>`;
+          }).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `).join('');
+}
+
+// ---- PATCH SAVE/LOAD TO INCLUDE kissLog ----
+const _origSave = saveData;
+saveData = async function() {
+  const data = { troops, tiebreakers, lastUpdated, selectedPlayer, kissLog };
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+  try {
+    flashStatus('Saving…', false);
+    if (typeof JSONBIN_ID !== 'undefined' && JSONBIN_ID && !JSONBIN_ID.includes('PASTE')) {
+      await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
+        body: JSON.stringify(data)
+      });
+    }
+    flashStatus('Saved ✓', true);
+  } catch(e) { flashStatus('Local only', false); }
+};
+
+const _origLoad = loadSaved;
+loadSaved = async function() {
+  try {
+    if (typeof JSONBIN_ID !== 'undefined' && JSONBIN_ID && !JSONBIN_ID.includes('PASTE')) {
+      const resp = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_ID}/latest`, {
+        headers: { 'X-Master-Key': JSONBIN_KEY }
+      });
+      const json = await resp.json();
+      const d = json.record || json;
+      if (d && d.troops) {
+        troops = d.troops || {};
+        tiebreakers = d.tiebreakers || {};
+        lastUpdated = d.lastUpdated || {};
+        selectedPlayer = d.selectedPlayer || PLAYERS[0].id;
+        kissLog = d.kissLog || [];
+        flashStatus('Synced ✓', true);
+        renderAll();
+        updateMapColors();
+        return;
+      }
+    }
+  } catch(e) {}
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (d.troops) troops = d.troops;
+    if (d.tiebreakers) tiebreakers = d.tiebreakers;
+    if (d.lastUpdated) lastUpdated = d.lastUpdated;
+    if (d.selectedPlayer) selectedPlayer = d.selectedPlayer;
+    if (d.kissLog) kissLog = d.kissLog;
+    flashStatus('Loaded ✓', true);
+  } catch(e) {}
+};
+
+// ---- BOOT ----
+loadMap().then(() => {
+  loadSaved().then(() => {
+    renderAll();
+    updateMapColors();
+  });
+});
+</script>
+</body>
+</html>

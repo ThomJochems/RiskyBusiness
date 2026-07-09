@@ -1,0 +1,19 @@
+{
+  "name": "risky-business-app",
+  "version": "1.0.0",
+  "description": "A multi-user online version of Risky Business with accounts, groups, and shared gameplay.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "better-sqlite3": "^11.5.0",
+    "express": "^4.21.2",
+    "express-session": "^1.4.0"
+  },
+  "devDependencies": {
+    "supertest": "^7.1.0"
+  }
+}
