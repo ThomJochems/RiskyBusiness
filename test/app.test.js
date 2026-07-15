@@ -2,9 +2,13 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const request = require('supertest');
 const path = require('node:path');
+const os = require('node:os');
+const fs = require('node:fs');
 
 process.env.NODE_ENV = 'test';
-process.env.DB_PATH = path.join(__dirname, '..', 'test-data.sqlite');
+process.env.DB_PATH = path.join(os.tmpdir(), `risky-business-test-${process.pid}.json`);
+
+test.after(() => fs.rmSync(process.env.DB_PATH, { force: true }));
 
 const { app } = require('../server');
 
@@ -35,6 +39,13 @@ test('users can sign up, log in, create a group, and join it', async () => {
   const createGroup = await user1.post('/api/groups').send({ name: 'North Atlantic' });
   assert.equal(createGroup.status, 201);
   assert.ok(createGroup.body.group.code);
+
+  const hiddenGroups = await user2.get('/api/groups');
+  assert.equal(hiddenGroups.status, 200);
+  assert.deepEqual(hiddenGroups.body.groups, []);
+
+  const hiddenGroupDetails = await user2.get(`/api/groups/${createGroup.body.group.id}`);
+  assert.equal(hiddenGroupDetails.status, 403);
 
   const joinGroup = await user2.post('/api/groups/join').send({ code: createGroup.body.group.code });
   assert.equal(joinGroup.status, 200);

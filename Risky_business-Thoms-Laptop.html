@@ -839,8 +839,9 @@
           <input type="checkbox" id="entry-tiebreaker" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;">
           <label for="entry-tiebreaker" style="font-family:'Cinzel',serif;font-size:0.62rem;letter-spacing:0.1em;color:var(--text-dim);cursor:pointer;">🔥 Count towards tiebreaker</label>
         </div>
-        <button class="add-entry-btn" onclick="addEntry()">+ ADD ENTRY</button>
+        <button class="add-entry-btn" id="entry-submit-btn" onclick="submitEntry()">+ ADD ENTRY</button>
       </div>
+
       <div class="timeline" id="log-list"></div>
     </div>
 
@@ -877,22 +878,34 @@
 <script>
 // ---- PLAYERS ----
 let PLAYERS = [];
+let currentUserId = null;
+let playerColors = {};
 const PLAYER_COLORS = ['#9b5de5', '#e63946', '#457b9d', '#2a9d8f', '#e9c46a', '#f4732a', '#38bdf8', '#fb923c'];
 
 function buildPlayer(member, index) {
   return {
     id: member.id,
     name: member.username || member.name || `Player ${index + 1}`,
-    color: PLAYER_COLORS[index % PLAYER_COLORS.length],
+    color: playerColors[member.id] || member.color || PLAYER_COLORS[index % PLAYER_COLORS.length],
     role: member.role
   };
 }
+
 
 const COUNTRY_NAMES = {
   4:"Afghanistan",8:"Albania",10:"Antarctica",12:"Algeria",16:"American Samoa",20:"Andorra",24:"Angola",28:"Antigua and Barbuda",32:"Argentina",36:"Australia",40:"Austria",44:"Bahamas",48:"Bahrain",50:"Bangladesh",52:"Barbados",56:"Belgium",60:"Bermuda",64:"Bhutan",68:"Bolivia",70:"Bosnia and Herzegovina",72:"Botswana",74:"Bouvet Island",76:"Brazil",84:"Belize",86:"Taiwan",90:"Solomon Islands",92:"British Virgin Islands",96:"Brunei",100:"Bulgaria",104:"Myanmar",108:"Burundi",112:"Belarus",116:"Cambodia",120:"Cameroon",124:"Canada",132:"Cape Verde",136:"Cayman Islands",140:"Central African Republic",144:"Sri Lanka",148:"Chad",152:"Chile",156:"China",158:"Taiwan",162:"Christmas Island",166:"Comoros",170:"Colombia",174:"Comoros",175:"Mauritius",178:"Mauritius",180:"Democratic Republic of the Congo",184:"Cook Islands",188:"Costa Rica",191:"Croatia",192:"Cuba",196:"Cyprus",203:"Czech Republic",204:"Benin",208:"Denmark",212:"Dominica",214:"Dominican Republic",218:"Ecuador",222:"El Salvador",226:"Equatorial Guinea",231:"Ethiopia",232:"Eritrea",238:"Falkland Islands",239:"South Georgia and South Sandwich Islands",242:"Fiji",246:"Finland",248:"French Guiana",250:"France",254:"French Guiana",258:"French Polynesia",260:"French Guiana",262:"Reunion",266:"Mozambique",268:"Mauritius",270:"Mauritius",275:"Palestine",276:"Germany",288:"Ghana",292:"Gibraltar",296:"Kiribati",300:"Greece",304:"Greenland",308:"Grenada",312:"Guadeloupe",316:"Guam",320:"Guatemala",324:"Guinea",328:"Guyana",332:"Haiti",334:"Heard Island and McDonald Islands",340:"Honduras",344:"Hong Kong",348:"Hungary",352:"Iceland",356:"India",360:"Indonesia",364:"Iran",368:"Iraq",372:"Ireland",376:"Israel",380:"Italy",383:"Kosovo",384:"Côte d'Ivoire",388:"Jamaica",392:"Japan",396:"Japan",398:"Kazakhstan",400:"Jordan",404:"Kenya",408:"North Korea",410:"South Korea",414:"Kuwait",417:"Kyrgyzstan",418:"Laos",422:"Lebanon",426:"Lesotho",428:"Latvia",430:"Liberia",434:"Libya",438:"Liechtenstein",440:"Lithuania",442:"Luxembourg",446:"Macao",450:"Madagascar",454:"Malawi",458:"Malaysia",462:"Maldives",466:"Mali",470:"Malta",474:"Martinique",478:"Mauritania",480:"Mauritius",484:"Mexico",492:"Monaco",496:"Mongolia",498:"Moldova",499:"Montenegro",500:"Montserrat",504:"Morocco",508:"Mozambique",512:"Oman",516:"Namibia",520:"Nauru",524:"Nepal",528:"Netherlands",531:"Curaçao",533:"Aruba",534:"Sint Maarten",535:"Caribbean Netherlands",540:"New Caledonia",548:"Vanuatu",554:"New Zealand",558:"Nicaragua",562:"Niger",566:"Nigeria",570:"Niue",574:"Norfolk Island",578:"Norway",580:"Northern Mariana Islands",581:"United States Minor Outlying Islands",583:"Federated States of Micronesia",584:"Marshall Islands",585:"Palau",586:"Pakistan",591:"Panama",598:"Papua New Guinea",600:"Paraguay",604:"Peru",608:"Philippines",612:"Pitcairn Islands",616:"Poland",620:"Portugal",624:"Guinea-Bissau",626:"Timor-Leste",630:"Puerto Rico",634:"Qatar",638:"Reunion",642:"Romania",643:"Russia",646:"Rwanda",652:"Saint Barthélemy",654:"Saint Helena, Ascension and Tristan da Cunha",659:"Saint Kitts and Nevis",660:"Anguilla",662:"Saint Lucia",666:"Saint Pierre and Miquelon",670:"Saint Vincent and the Grenadines",674:"San Marino",678:"São Tomé and Príncipe",682:"Saudi Arabia",686:"Senegal",688:"Serbia",690:"Seychelles",694:"Sierra Leone",702:"Malta",703:"Slovakia",704:"Vietnam",705:"Slovenia",706:"Somalia",710:"South Africa",716:"Zimbabwe",724:"Spain",728:"South Sudan",729:"Sudan",732:"Western Sahara",740:"Suriname",744:"Svalbard and Jan Mayen",748:"Eswatini",752:"Sweden",756:"Switzerland",760:"Syria",762:"Tajikistan",764:"Thailand",768:"Togo",772:"Tokelau",776:"Tonga",780:"Trinidad and Tobago",784:"United Arab Emirates",788:"Tunisia",792:"Turkey",795:"Turkmenistan",796:"Turks and Caicos Islands",798:"Tuvalu",800:"Uganda",804:"Ukraine",807:"North Macedonia",818:"Egypt",826:"United Kingdom",831:"Guernsey",832:"Jersey",833:"Isle of Man",834:"Tanzania",840:"United States",850:"United States Virgin Islands",854:"Burkina Faso",858:"Uruguay",860:"Uzbekistan",862:"Venezuela",876:"Wallis and Futuna",882:"Samoa",886:"Taiwan",887:"Yemen",894:"Zambia",
 };
 
 function getCountryName(id) { return COUNTRY_NAMES[parseInt(id)] || null; }
+function normalizeCountryId(id) {
+  if (id === null || id === undefined || id === '') return null;
+  return String(parseInt(id, 10));
+}
+
+function localDateInputValue(date = new Date()) {
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+}
 
 // ---- CONTINENTS ----
 const CONTINENTS = {
@@ -940,7 +953,7 @@ const GROUP_ID = Number(window.location.pathname.split('/')[2]) || null;
 
 async function saveData() {
   if (!GROUP_ID) return;
-  const data = { troops, tiebreakers, lastUpdated, selectedPlayer, kissLog };
+  const data = { troops, tiebreakers, lastUpdated, selectedPlayer, kissLog, playerColors };
   try {
     flashStatus('Saving…', false);
     await fetch(`/api/groups/${GROUP_ID}/game`, {
@@ -969,16 +982,38 @@ async function loadGroupMembers() {
   }
 }
 
+async function loadCurrentUser() {
+  try {
+    const response = await fetch('/api/auth/me');
+    const data = await response.json();
+    currentUserId = response.ok ? data.user?.id : null;
+  } catch (e) {
+    currentUserId = null;
+  }
+}
+
+function mergeCountryState(source) {
+  const normalized = {};
+  Object.entries(source || {}).forEach(([countryId, values]) => {
+    const id = normalizeCountryId(countryId);
+    if (!id) return;
+    normalized[id] = { ...(normalized[id] || {}), ...(values || {}) };
+  });
+  return normalized;
+}
+
 async function loadSaved() {
   if (!GROUP_ID) return;
-  await loadGroupMembers();
+  await Promise.all([loadGroupMembers(), loadCurrentUser()]);
   try {
     const response = await fetch(`/api/groups/${GROUP_ID}/game`);
     const data = await response.json();
     if (response.ok && data.game) {
-      troops = data.game.troops || {};
-      tiebreakers = data.game.tiebreakers || {};
-      lastUpdated = data.game.lastUpdated || {};
+      troops = mergeCountryState(data.game.troops);
+      tiebreakers = mergeCountryState(data.game.tiebreakers);
+      lastUpdated = mergeCountryState(data.game.lastUpdated);
+      playerColors = data.game.playerColors || {};
+      PLAYERS = PLAYERS.map((player, index) => buildPlayer(player, index));
       selectedPlayer = data.game.selectedPlayer || PLAYERS[0]?.id || null;
       kissLog = data.game.kissLog || [];
       flashStatus('Loaded ✓', true);
@@ -1175,7 +1210,7 @@ function countTerritories(pid) {
 function selectCountry(id, name, el) {
   if (selectedEl) selectedEl.classList.remove('selected');
   selectedEl = el; el.classList.add('selected');
-  selectedCountry = { id, name };
+  selectedCountry = { id: normalizeCountryId(id), name };
   renderTerritoryPanel();
 }
 
@@ -1215,7 +1250,7 @@ function hexToRgb(hex) {
 
 function updateMapColors() {
   document.querySelectorAll('#world-map path').forEach(p => {
-    const id = p.getAttribute('data-id');
+    const id = normalizeCountryId(p.getAttribute('data-id'));
     const winner = getWinner(id);
     if (winner) {
       const pl = PLAYERS.find(x => x.id === winner);
@@ -1280,7 +1315,7 @@ function quickAddEntry(countryId, countryName, playerId) {
   setTimeout(() => {
     document.getElementById('entry-player').value = playerId;
     document.getElementById('entry-country').value = countryId;
-    document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('entry-date').value = localDateInputValue();
     document.getElementById('entry-name').focus();
   }, 100);
 }
@@ -1301,12 +1336,24 @@ function renderPlayers() {
       <div class="player-card-header">
         <div class="player-dot" style="background:${p.color};box-shadow:0 0 6px ${p.color}"></div>
         <div class="player-name">${p.name}</div>
+        ${p.id === currentUserId ? `<input type="color" value="${p.color}" title="Kies je kleur" aria-label="Kies je kleur" onclick="event.stopPropagation()" onchange="setPlayerColor(${p.id}, this.value); event.stopPropagation()" style="width:28px;height:24px;padding:0;border:0;background:none;cursor:pointer;">` : ''}
       </div>
       <div class="player-territories">${terr} ${terr===1?'territory':'territories'} controlled</div>
     `;
     div.onclick = () => { selectedPlayer = p.id; renderAll(); };
     list.appendChild(div);
   });
+}
+
+function setPlayerColor(playerId, color) {
+  if (playerId !== currentUserId || !/^#[0-9a-f]{6}$/i.test(color)) return;
+  playerColors[playerId] = color;
+  const player = PLAYERS.find(p => p.id === playerId);
+  if (player) player.color = color;
+  updateMapColors();
+  renderAll();
+  renderStats();
+  saveData();
 }
 
 function renderTerritoryPanel() {
@@ -1606,8 +1653,10 @@ window.selectCountry = function(id, name, el) {
 
 // ---- STATS ----
 let kissLog = []; // [{ id, name, age, date, playerId, country }]
+let editingEntryId = null;
 
 function openStats() {
+
   document.getElementById('stats-overlay').classList.add('open');
   populateStatsForm();
   renderStats();
@@ -1642,52 +1691,122 @@ function populateStatsForm() {
 
   // Default date to today
   const dateEl = document.getElementById('entry-date');
-  if (!dateEl.value) dateEl.value = new Date().toISOString().split('T')[0];
+  if (!dateEl.value) dateEl.value = localDateInputValue();
+
+  // Ensure submit button shows add mode
+  const btn = document.getElementById('entry-submit-btn');
+  if (btn) btn.textContent = '+ ADD ENTRY';
+  editingEntryId = null;
 }
 
-function addEntry() {
+
+
+function submitEntry() {
   const name = document.getElementById('entry-name').value.trim();
   if (!name) { alert('Please enter a name'); return; }
   const age = parseInt(document.getElementById('entry-age').value) || null;
-  const date = document.getElementById('entry-date').value || new Date().toISOString().split('T')[0];
+  const date = document.getElementById('entry-date').value || localDateInputValue();
   const playerId = parseInt(document.getElementById('entry-player').value);
-  const country = document.getElementById('entry-country').value || null;
+  const country = normalizeCountryId(document.getElementById('entry-country').value);
   const countryName = country ? COUNTRY_NAMES[parseInt(country)] || null : null;
 
-  const entry = {
-    id: Date.now(),
-    name,
-    age,
-    date,
-    playerId,
-    country,
-    countryName,
-  };
-
-  kissLog.unshift(entry); // newest first
-
-  // Also add 1 point on the map for this player in this country
-  if (country) {
-    if (!troops[country]) troops[country] = {};
-    troops[country][playerId] = (troops[country][playerId] || 0) + 1;
-    if (!lastUpdated[country]) lastUpdated[country] = {};
-    lastUpdated[country][playerId] = entry.id;
-    updateMapColors();
-    renderAll();
+  if (editingEntryId) {
+    const existing = kissLog.find(e => e.id === editingEntryId);
+    if (existing) {
+      decrementTroopsForEntry(existing);
+      Object.assign(existing, { name, age, date, playerId, country, countryName });
+      incrementTroopsForEntry(existing);
+    }
+    editingEntryId = null;
+  } else {
+    const entry = { id: Date.now(), name, age, date, playerId, country, countryName };
+    kissLog.unshift(entry);
+    incrementTroopsForEntry(entry);
   }
 
+  // keep date/player/country so rapid edits are easier
   document.getElementById('entry-name').value = '';
   document.getElementById('entry-age').value = '';
+  const btn = document.getElementById('entry-submit-btn');
+  if (btn) btn.textContent = '+ ADD ENTRY';
+
   saveData();
+
+  updateMapColors();
+  renderAll();
   renderStats();
+}
+
+function incrementTroopsForEntry(entry) {
+  if (!entry.country || !entry.playerId) return;
+  const cid = normalizeCountryId(entry.country);
+  if (!troops[cid]) troops[cid] = {};
+  troops[cid][entry.playerId] = (troops[cid][entry.playerId] || 0) + 1;
+  if (!lastUpdated[cid]) lastUpdated[cid] = {};
+  lastUpdated[cid][entry.playerId] = entry.id;
+}
+
+
+function decrementTroopsForEntry(entry) {
+  if (!entry || !entry.country || !entry.playerId) return;
+  const cid = normalizeCountryId(entry.country);
+  if (!troops[cid]) return;
+  const pid = entry.playerId;
+  const current = troops[cid][pid] || 0;
+  const next = Math.max(0, current - 1);
+  if (next === 0) {
+    delete troops[cid][pid];
+    if (Object.keys(troops[cid]).length === 0) delete troops[cid];
+  } else {
+    troops[cid][pid] = next;
+  }
+
+  // Recompute lastUpdated for this (country, player) from remaining log entries.
+  const remaining = kissLog.filter(e => e.id !== entry.id && normalizeCountryId(e.country) === cid && e.playerId === pid);
+  if (!lastUpdated[cid]) lastUpdated[cid] = {};
+  if (remaining.length === 0) {
+    delete lastUpdated[cid][pid];
+    if (Object.keys(lastUpdated[cid]).length === 0) delete lastUpdated[cid];
+  } else {
+    // newest entry is max id (we use Date.now() for id)
+    const latest = remaining.reduce((a,b) => (a.id > b.id ? a : b));
+    lastUpdated[cid][pid] = latest.id;
+  }
+}
+
+function editEntry(id) {
+  const entry = kissLog.find(e => e.id === id);
+  if (!entry) return;
+
+  editingEntryId = id;
+
+  document.getElementById('entry-name').value = entry.name || '';
+  document.getElementById('entry-age').value = entry.age ?? '';
+  document.getElementById('entry-date').value = entry.date || localDateInputValue();
+  document.getElementById('entry-player').value = String(entry.playerId);
+  document.getElementById('entry-country').value = entry.country || '';
+
+  // update submit button label
+  const btn = document.getElementById('entry-submit-btn');
+  if (btn) btn.textContent = '✎ SAVE CHANGES';
 }
 
 function deleteEntry(id) {
+  const entry = kissLog.find(e => e.id === id);
+  if (!entry) return;
   if (!confirm('Delete this entry?')) return;
+
+  // Remove from log first, then update counters based on remaining state.
   kissLog = kissLog.filter(e => e.id !== id);
-  saveData();
+  decrementTroopsForEntry(entry);
+
+  updateMapColors();
+  renderAll();
   renderStats();
+  saveData();
 }
+
+
 
 function renderStats() {
   renderLogList();
@@ -1696,10 +1815,19 @@ function renderStats() {
   renderLeaderboard();
 }
 
+function formatDateNl(dateStr) {
+  if (!dateStr) return '?';
+  // input is yyyy-mm-dd; parse as local time to avoid timezone shifts
+  const d = new Date(dateStr + 'T12:00:00');
+  return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
 function entryCard(entry, showDelete = true) {
   const player = PLAYERS.find(p => p.id === entry.playerId);
-  const dateStr = entry.date ? new Date(entry.date + 'T12:00:00').toLocaleDateString('nl-NL', { day:'numeric', month:'short', year:'numeric' }) : '?';
-  const del = showDelete ? `<button class="timeline-delete" onclick="deleteEntry(${entry.id})">✕</button>` : '';
+  const dateStr = formatDateNl(entry.date);
+const del = showDelete ? `<button class="timeline-delete" onclick="deleteEntry(${entry.id})">✕</button>` : '';
+  const edit = showDelete ? `<button class="timeline-delete" style="margin-right:6px;" onclick="editEntry(${entry.id})">✎</button>` : '';
+
   return `
     <div class="timeline-entry">
       <div class="timeline-dot" style="background:${player?.color||'#888'};color:${player?.color||'#888'}"></div>
@@ -1711,10 +1839,15 @@ function entryCard(entry, showDelete = true) {
           <span>📅 ${dateStr}</span>
         </div>
       </div>
-      ${del}
+      <div style="display:flex;flex-direction:row;gap:6px;align-items:center;">
+        ${edit}
+        ${del}
+      </div>
+
     </div>
   `;
 }
+
 
 function renderLogList() {
   const el = document.getElementById('log-list');
@@ -1746,7 +1879,7 @@ function renderCharts() {
 
   // Stat cards
   const avgAge = kissLog.filter(e => e.age).reduce((s,e) => s+e.age, 0) / (kissLog.filter(e=>e.age).length || 1);
-  const countries = new Set(kissLog.filter(e=>e.country).map(e=>e.country)).size;
+  const countries = new Set(kissLog.filter(e=>e.country).map(e=>normalizeCountryId(e.country))).size;
   document.getElementById('stat-cards').innerHTML = `
     <div class="stat-card">
       <div class="stat-card-value">${kissLog.length}</div>
@@ -1835,7 +1968,7 @@ function renderLeaderboard() {
   const ranked = PLAYERS.map(p => {
     const entries = kissLog.filter(e => e.playerId === p.id);
     const avgAge = entries.filter(e=>e.age).reduce((s,e)=>s+e.age,0) / (entries.filter(e=>e.age).length||1);
-    const countries = new Set(entries.filter(e=>e.country).map(e=>e.country)).size;
+    const countries = new Set(entries.filter(e=>e.country).map(e=>normalizeCountryId(e.country))).size;
     return { ...p, entries, count: entries.length, avgAge, countries };
   }).sort((a,b) => b.count - a.count);
 
@@ -1855,9 +1988,10 @@ function renderLeaderboard() {
         <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px;">
           <div style="font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.15em;color:var(--text-dim);margin-bottom:6px;">RECENT</div>
           ${p.entries.slice(0,3).map(e => {
-            const dateStr = e.date ? new Date(e.date+'T12:00:00').toLocaleDateString('nl-NL',{day:'numeric',month:'short'}) : '';
+            const dateStr = e.date ? formatDateNl(e.date) : '';
             return `<div style="font-size:0.8rem;padding:2px 0;color:var(--text)">${e.name}${e.age?` (${e.age})`:''} ${e.countryName?`• ${e.countryName}`:''} ${dateStr?`• ${dateStr}`:''}</div>`;
           }).join('')}
+
         </div>
       ` : ''}
     </div>
